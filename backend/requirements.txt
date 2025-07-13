@@ -5,3 +5,5 @@ python-multipart
 aiofiles
 pydantic
 python-dotenv
+psycopg2-binary
+
