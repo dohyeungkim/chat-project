@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://chat-project-4.onrender.com";
 
 export async function fetchMessages(roomId: number) {
   const res = await fetch(`${API_URL}/messages?room_id=${roomId}`);
