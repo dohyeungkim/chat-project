@@ -1,31 +1,46 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { fetchMessages } from "../api/chat";
 import { Message } from "../types/Message";
 import ChatList from "../components/ChatList";
 import ChatInput from "../components/ChatInput";
 
+const BACKEND_WS_BASE = "wss://chat-project-3.onrender.com";
+
 const ChatRoom: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const [messages, setMessages] = useState<Message[]>([]);
-
-  const loadMessages = async () => {
-    if (!roomId) return;
-    const data = await fetchMessages(Number(roomId));
-    setMessages(data);
-  };
+  const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    loadMessages();
-    const interval = setInterval(loadMessages, 3000);
-    return () => clearInterval(interval);
+    if (!roomId) return;
+
+    const ws = new WebSocket(`${BACKEND_WS_BASE}/ws/chat/${roomId}`);
+    socketRef.current = ws;
+
+    ws.onopen = () => console.log("✅ WebSocket 연결됨");
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setMessages((prev) => [...prev, data]);
+    };
+
+    ws.onclose = () => console.log("🔌 WebSocket 연결 종료됨");
+
+    return () => ws.close();
   }, [roomId]);
+
+  const handleSend = (newMsg: Message) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify(newMsg));
+    }
+  };
 
   return (
     <div>
       <h2>채팅방 {roomId}</h2>
       <ChatList messages={messages} />
-      <ChatInput roomId={Number(roomId)} onSend={loadMessages} />
+      <ChatInput roomId={Number(roomId)} onSend={handleSend} />
     </div>
   );
 };

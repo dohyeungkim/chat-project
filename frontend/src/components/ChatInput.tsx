@@ -1,9 +1,10 @@
 import React, { useState } from "react";
+import { Message } from "../types/Message"
 import { sendTextMessage, sendFileMessage } from "../api/chat";
 
 interface Props {
   roomId: number;
-  onSend: () => void;
+  onSend: (message: Message) => void;
 }
 
 const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
@@ -13,21 +14,30 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
 
   const handleSend = async () => {
 
-    const trimmedSender = sender.trim();
+    const trimmed = sender.trim();
 
-    if (trimmedSender !== "학생" && trimmedSender !== "교수") {
+    if (trimmed !== "학생" && trimmed !== "교수") {
       alert("보낸 사람은 '학생' 또는 '교수'만 입력할 수 있습니다.");
       return;
     }
-    if (text.trim()) {
-      await sendTextMessage(roomId, sender, text);
-      setText("");
-    }
-    if (file) {
-      await sendFileMessage(roomId, sender, file);
-      setFile(null);
-    }
-    await onSend();
+    if (!text.trim() && !file) return; // 내용이 없으면 무시
+
+    // 1) Message 객체 생성
+    const newMsg: Message = {
+      id: Date.now(),
+      room_id: roomId,
+      sender: trimmed as "학생" | "교수",
+      type: file ? "file" : "text",
+      content: file ? file.name : text,
+      created_at: new Date().toISOString(),
+    };
+
+    // 2) 부모(ChatRoom)로 전달 → WebSocket 전송
+    onSend(newMsg);
+
+    // 3) 입력창 초기화
+    setText("");
+    setFile(null);
   };
 
   return (
