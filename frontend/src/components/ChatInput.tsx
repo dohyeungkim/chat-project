@@ -25,7 +25,7 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
     // 1) Message 객체 생성
     const newMsg: Message = {
       id: Date.now(),
-      room_id: roomId,
+      room_id: String(roomId),
       sender: trimmed as "학생" | "교수",
       type: file ? "file" : "text",
       content: file ? file.name : text,
