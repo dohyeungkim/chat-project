@@ -22,28 +22,37 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
     }
     if (!text.trim() && !file) return; // 내용이 없으면 무시
 
-    // 1) Message 객체 생성
-    const newMsg: Message = {
-      id: Date.now(),
-      room_id: String(roomId),
-      sender: trimmed as "학생" | "교수",
-      type: file ? "file" : "text",
-      text: text.trim() || undefined,
-      content: file ? file.name : text,
-      created_at: new Date().toISOString(),
-    };
-
-    onSend(newMsg);
-
-    try {
-      if (file) {
-        await sendFileMessage(roomId, trimmed, file);
-      } else {
-        await sendTextMessage(roomId, trimmed, text);
-      }
-    } catch (err) {
-        console.error("API 저장 실패", err);
+  try {
+    if (text.trim()) {
+      const textMsg: Message = {
+        id: Date.now(),
+        room_id: String(roomId),
+        sender: trimmed as "학생" | "교수",
+        type: "text",
+        text: text.trim(),
+        content: text.trim(),
+        created_at: new Date().toISOString(),
+      };
+      onSend(textMsg);
+      await sendTextMessage(roomId, trimmed, text);
     }
+
+    if (file) {
+      const fileMsg: Message = {
+        id: Date.now() + 1, // 고유 ID 부여
+        room_id: String(roomId),
+        sender: trimmed as "학생" | "교수",
+        type: "file",
+        text: undefined,
+        content: file.name,
+        created_at: new Date().toISOString(),
+      };
+      onSend(fileMsg);
+      await sendFileMessage(roomId, trimmed, file);
+    }
+  } catch (err) {
+    console.error("API 저장 실패", err);
+  } 
 
     
 
