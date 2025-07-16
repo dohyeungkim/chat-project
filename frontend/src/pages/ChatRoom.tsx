@@ -5,7 +5,7 @@ import { Message } from "../types/Message";
 import ChatList from "../components/ChatList";
 import ChatInput from "../components/ChatInput";
 
-const BACKEND_WS_BASE = "wss://chat-project-1-avq9.onrender.com";
+const BACKEND_WS_BASE = "wss://chat-project-1-av9p.onrender.com";
 
 const ChatRoom: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
