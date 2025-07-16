@@ -5,6 +5,7 @@ from app import models
 from app.database import engine
 from app.routes import messages
 from fastapi.staticfiles import StaticFiles
+from app.websocket.endpoints import router as websocket_router
 
 models.Base.metadata.create_all(bind=engine)
 
