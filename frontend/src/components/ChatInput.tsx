@@ -22,8 +22,7 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
     }
     if (!text.trim() && !file) return; // 내용이 없으면 무시
 
-  try {
-    if (text.trim()) {
+    if (file && text.trim()) {
       const textMsg: Message = {
         id: Date.now(),
         room_id: String(roomId),
@@ -50,9 +49,31 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
       onSend(fileMsg);
       await sendFileMessage(roomId, trimmed, file);
     }
-  } catch (err) {
-    console.error("API 저장 실패", err);
-  } 
+    
+else if (file) {
+  const fileMsg: Message = {
+    id: Date.now(),
+    room_id: String(roomId),
+    sender: trimmed as "학생" | "교수",
+    type: "file",
+    content: file.name,
+    created_at: new Date().toISOString(),
+  };
+  onSend(fileMsg);
+  await sendFileMessage(roomId, trimmed, file);
+}
+else if (text.trim()) {
+  const textMsg: Message = {
+    id: Date.now(),
+    room_id: String(roomId),
+    sender: trimmed as "학생" | "교수",
+    type: "text",
+    text: text.trim(),
+    created_at: new Date().toISOString(),
+  };
+  onSend(textMsg);
+  await sendTextMessage(roomId, trimmed, text);
+}
 
     
 
