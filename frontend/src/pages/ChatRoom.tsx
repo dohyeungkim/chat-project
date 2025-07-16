@@ -31,7 +31,10 @@ const ChatRoom: React.FC = () => {
   }, [roomId]);
 
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId){
+      console.error("❗roomId가 없습니다. useParams 확인 필요.");
+    return;
+    }
 
     const roomNumber = parseInt(roomId, 10);
     if (isNaN(roomNumber)) {
