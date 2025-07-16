@@ -19,16 +19,17 @@ export async function sendTextMessage(roomId: number, sender: string, content: s
   return res.json();
 }
 
-export async function sendFileMessage(roomId: number, sender: string, file: File) {
+export async function sendFileMessage(roomId: number, sender: string, file: File):Promise<string> {
   const formData = new FormData();
+  formData.append("file", file);
   formData.append("room_id", String(roomId));
   formData.append("sender", sender);
-  formData.append("type", "file");
-  formData.append("file", file);
-  
 
-  return fetch(`${API_URL}/messages/file/`, {
+  const res = await fetch(`${API_URL}/upload`, {
     method: "POST",
     body: formData,
   });
+
+  const data = await res.json(); // { filename: 'xxxx.mp4' }
+  return data.filename; 
 }
