@@ -28,9 +28,12 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
       room_id: String(roomId),
       sender: trimmed as "학생" | "교수",
       type: file ? "file" : "text",
+      text: text.trim() || undefined,
       content: file ? file.name : text,
       created_at: new Date().toISOString(),
     };
+
+    onSend(newMsg);
 
     try {
       if (file) {
@@ -42,8 +45,7 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
         console.error("API 저장 실패", err);
     }
 
-    // 2) 부모(ChatRoom)로 전달 → WebSocket 전송
-    onSend(newMsg);
+    
 
     // 3) 입력창 초기화
     setText("");
