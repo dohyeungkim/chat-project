@@ -11,8 +11,7 @@ async def chat_ws(websocket: WebSocket, room_id: str):
     await manager.connect(websocket)
     try:
         while True:
-            data = await websocket.receive_text()
-            print(f"📩 메시지 수신: {data}")
-            await manager.broadcast(data)
+            text = await websocket.receive_text()
+            await manager.broadcast(text)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
