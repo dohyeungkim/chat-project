@@ -1,5 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from .manager import ConnectionManager
+import json
 
 router = APIRouter()
 manager = ConnectionManager()
@@ -12,6 +13,6 @@ async def chat_ws(websocket: WebSocket, room_id: str):
         while True:
             data = await websocket.receive_text()
             print(f"📩 메시지 수신: {data}")
-            await manager.broadcast(f"[{room_id}] {data}")
+            await manager.broadcast(data)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
