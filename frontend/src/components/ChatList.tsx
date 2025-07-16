@@ -42,12 +42,12 @@ const ChatList: React.FC<Props> = ({ messages }) => {
                 {sender}
               </div>
 
-              {/* 텍스트 메시지 */}
-              {msg.type === "text" && msg.content && (
-                <span style={{ marginLeft: "0.5rem" }}>{msg.content}</span>
+              {(msg.text || (msg.type === "text" && msg.content)) && (
+                <span style={{ marginLeft: "0.5rem" }}>
+                  {msg.text || msg.content}
+                </span>
               )}
-
-              {/* 파일 메시지 */}
+              
               {msg.type === "file" && msg.content && (
                 <div style={{ marginTop: "0.5rem" }}>
                   {isImage ? (
