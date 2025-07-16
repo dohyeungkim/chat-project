@@ -5,7 +5,7 @@ import { Message } from "../types/Message";
 import ChatList from "../components/ChatList";
 import ChatInput from "../components/ChatInput";
 
-const BACKEND_WS_BASE = "wss://chat-project-3.onrender.com";
+const BACKEND_WS_BASE = "wss://chat-project-1-avq9.onrender.com";
 
 const ChatRoom: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -28,6 +28,15 @@ const ChatRoom: React.FC = () => {
     ws.onclose = () => console.log("🔌 WebSocket 연결 종료됨");
 
     return () => ws.close();
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!roomId) return;
+
+    // 기존 채팅 불러오기
+    fetchMessages(Number(roomId)).then((data) => {
+    setMessages(data);
+    });
   }, [roomId]);
 
   const handleSend = (newMsg: Message) => {

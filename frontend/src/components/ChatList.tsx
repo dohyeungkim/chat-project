@@ -9,7 +9,7 @@ const ChatList: React.FC<Props> = ({ messages }) => {
   return (
     <div style={{ border: "1px solid #ccc", minHeight: "300px", padding: "1rem" }}>
       {messages.map((msg) => {
-        const fileUrl = `https://chat-project-3.onrender.com/static/${msg.content}`;
+        const fileUrl = `https://chat-project-1-av9p.onrender.com/static/${msg.content}`;
         const isImage = /\.(png|jpe?g|gif|webp|bmp)$/i.test(msg.content ?? "");
         const sender = msg.sender?.trim();
         const isProfessor = msg.sender === "교수";

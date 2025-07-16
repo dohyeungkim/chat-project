@@ -32,6 +32,16 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
       created_at: new Date().toISOString(),
     };
 
+    try {
+      if (file) {
+        await sendFileMessage(roomId, trimmed, file);
+      } else {
+        await sendTextMessage(roomId, trimmed, text);
+      }
+    } catch (err) {
+        console.error("API 저장 실패", err);
+    }
+
     // 2) 부모(ChatRoom)로 전달 → WebSocket 전송
     onSend(newMsg);
 
