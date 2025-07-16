@@ -34,7 +34,10 @@ const ChatRoom: React.FC = () => {
     if (!roomId) return;
 
     const roomNumber = parseInt(roomId, 10);
-    if (isNaN(roomNumber)) return;
+    if (isNaN(roomNumber)) {
+    console.warn("❌ 유효하지 않은 roomId:", roomId);
+    return;
+  }
 
     // 기존 채팅 불러오기
     fetchMessages(roomNumber).then((data) => {
