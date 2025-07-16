@@ -33,8 +33,11 @@ const ChatRoom: React.FC = () => {
   useEffect(() => {
     if (!roomId) return;
 
+    const roomNumber = parseInt(roomId, 10);
+    if (isNaN(roomNumber)) return;
+
     // 기존 채팅 불러오기
-    fetchMessages(Number(roomId)).then((data) => {
+    fetchMessages(roomNumber).then((data) => {
     setMessages(data);
     });
   }, [roomId]);

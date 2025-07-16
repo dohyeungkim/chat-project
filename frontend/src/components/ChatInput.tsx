@@ -27,7 +27,7 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
       if (text.trim()) {
         const textMsg: Message = {
           id: Date.now(),
-          room_id: String(roomId),
+          room_id: Number(roomId),
           sender: trimmed as "학생" | "교수",
           type: "text",
           text: text.trim(),
@@ -43,7 +43,7 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
       if (file) {
         const fileMsg: Message = {
           id: Date.now() + 1,
-          room_id: String(roomId),
+          room_id: Number(roomId),
           sender: trimmed as "학생" | "교수",
           type: "file",
           text: undefined,
