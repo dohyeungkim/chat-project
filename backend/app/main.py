@@ -10,7 +10,7 @@ from app.websocket.endpoints import router as websocket_router
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-app.include_router(messages.router)
+app.include_router(messages.router, prefix="/messages")
 app.mount("/static", StaticFiles(directory="uploaded_files"), name="static")
 # CORS 설정
 app.add_middleware(
