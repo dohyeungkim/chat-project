@@ -35,7 +35,7 @@ const ChatRoom: React.FC = () => {
 
     const roomNumber = parseInt(roomId, 10);
     if (isNaN(roomNumber)) {
-    console.warn("❌ 유효하지 않은 roomId:", roomId);
+    console.log("❌ 유효하지 않은 roomId:", roomId);
     return;
   }
 
