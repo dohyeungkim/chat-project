@@ -28,7 +28,7 @@ const ChatRoom: React.FC = () => {
     ws.onclose = () => console.log("🔌 WebSocket 연결 종료됨");
 
     return () => ws.close();
-  }, [roomId]);
+  }, [roomId, messages]);
 
   useEffect(() => {
     if (!roomId){
