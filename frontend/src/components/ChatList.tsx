@@ -9,11 +9,10 @@ const ChatList: React.FC<Props> = ({ messages }) => {
   return (
     <div style={{ border: "1px solid #ccc", minHeight: "300px", padding: "1rem" }}>
       {messages.map((msg) => {
-        const fileUrl = `https://chat-project-1-av9p.onrender.com/static/${msg.content}`;
-        const isImage = /\.(png|jpe?g|gif|webp|bmp)$/i.test(msg.content ?? "");
+        const content = msg.content ?? "";
+        const isImage = /\.(png|jpe?g|gif|webp|bmp)$/i.test(content);
         const sender = msg.sender?.trim();
-        const isProfessor = msg.sender === "교수";
-        
+        const isProfessor = sender === "교수";
 
         return (
           <div
@@ -43,23 +42,25 @@ const ChatList: React.FC<Props> = ({ messages }) => {
                 {sender}
               </div>
 
-              {(msg.text || (msg.type === "text" && msg.content)) && (
+              {/* 텍스트 메시지 출력 */}
+              {(msg.text || (msg.type === "text" && content)) && (
                 <span style={{ marginLeft: "0.5rem" }}>
-                  {msg.text || msg.content}
+                  {msg.text || content}
                 </span>
               )}
-              
-              {msg.type === "file" && msg.content && (
+
+              {/* 파일 메시지 출력 */}
+              {msg.type === "file" && content && (
                 <div style={{ marginTop: "0.5rem" }}>
                   {isImage ? (
                     <img
-                      src={fileUrl}
+                      src={content}
                       alt="보낸 이미지"
                       style={{ maxWidth: "200px", display: "block" }}
                     />
                   ) : (
-                    <a href={fileUrl} download style={{ color: "blue" }}>
-                      📎 파일 다운로드: {msg.content}
+                    <a href={content} download style={{ color: "blue" }}>
+                      📎 파일 다운로드: {decodeURIComponent(content.split("/").pop() ?? "파일")}
                     </a>
                   )}
                 </div>
