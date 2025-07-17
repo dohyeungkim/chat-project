@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { fetchMessages } from "../api/chat";
+import { fetchMessages, sendTextMessage, sendFileMessage } from "../api/chat";
 import { Message } from "../types/Message";
 import ChatList from "../components/ChatList";
 import ChatInput from "../components/ChatInput";
@@ -23,12 +23,9 @@ const ChatRoom: React.FC = () => {
     ws.onmessage = (event) => {
       try {
         const msg: Message = JSON.parse(event.data);
-
-        // 파일 메시지 content가 /static/ 경로가 아니면 보정
-        if (msg.type === "file" && typeof msg.content === "string" && !msg.content.startsWith("/static/")) {
-          msg.content = `/static/${msg.content}`;
+        if (msg.type === "file") {
+          console.log("파일 URL:", msg.content);  // 여기가 적용 위치입니다
         }
-
         setMessages((prev) => [...prev, msg]);
       } catch (err) {
         console.error("WebSocket 메시지 파싱 오류:", err);
@@ -38,7 +35,7 @@ const ChatRoom: React.FC = () => {
     ws.onclose = () => console.log("🔌 WebSocket 연결 종료됨");
 
     return () => ws.close();
-  }, [roomId, messages]);
+  }, [roomId]);
 
   useEffect(() => {
     if (!roomId){
@@ -58,9 +55,15 @@ const ChatRoom: React.FC = () => {
     });
   }, [roomId]);
 
-  const handleSend = (newMsg: Message) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify(newMsg));
+  const handleSend = async (newMsg: Message, file?: File) => {
+    const roomNumber = Number(roomId);
+    if (newMsg.type === "text") {
+      setMessages((prev) => [...prev, newMsg]);
+      await sendTextMessage(roomNumber, newMsg.sender, newMsg.text || "");
+    } else if (newMsg.type === "file" && file) {
+      // 파일 메시지는 서버에서 저장 및 WebSocket broadcast 처리
+      const response = await sendFileMessage(roomNumber, newMsg.sender, file);
+      // 서버에서 broadcast 되므로 클라이언트는 따로 추가할 필요 없음
     }
   };
 
