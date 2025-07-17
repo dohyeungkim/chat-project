@@ -1,4 +1,4 @@
-const API_URL = "https://chat-project-3.onrender.com";
+const API_URL = "https://chat-project-1-av9p.onrender.com";
 export async function fetchMessages(roomId) {
     const res = await fetch(`${API_URL}/messages?room_id=${roomId}`);
     return res.json();
