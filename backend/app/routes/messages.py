@@ -57,7 +57,14 @@ def upload_file_message(
     db.add(message)
     db.commit()
     db.refresh(message)
-    return message
+    return {
+    "id": message.id,
+    "room_id": message.room_id,
+    "sender": message.sender,
+    "type": message.type,
+    "content": filename and f"{filename}",
+    "created_at": message.created_at.isoformat(),
+}
 
 
 @router.get("/file/{filename}")
