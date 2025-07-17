@@ -25,57 +25,38 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
   try {
     // 텍스트 + 파일 모두 있는 경우
     if (file && text.trim()) {
-      const textMsg: Message = {
-        id: Date.now(),
-        room_id: roomId,
-        sender: trimmed as "학생" | "교수",
-        type: "text",
-        text: text.trim(),
-        created_at: new Date().toISOString(),
-      };
-      onSend(textMsg); // 실시간 표시
-      await sendTextMessage(roomId, trimmed, text); // 서버 전송
+  // 텍스트 메시지 전송
+  const textMsg: Message = {
+    id: Date.now(),
+    room_id: roomId,
+    sender: trimmed as "학생" | "교수",
+    type: "text",
+    text: text.trim(),
+    created_at: new Date().toISOString(),
+  };
+  onSend(textMsg);
+  await sendTextMessage(roomId, trimmed, text);
 
-      const fileMsg: Message = {
-        id: Date.now() + 1,
-        room_id: roomId,
-        sender: trimmed as "학생" | "교수",
-        type: "file",
-        content: file.name,
-        created_at: new Date().toISOString(),
-      };
-      onSend(fileMsg); // 실시간 표시
-      await sendFileMessage(roomId, trimmed, file); // 서버 전송
-    }
-
-    // 파일만 있는 경우
-    else if (file) {
-      const fileMsg: Message = {
-        id: Date.now(),
-        room_id: roomId,
-        sender: trimmed as "학생" | "교수",
-        type: "file",
-        content: file.name,
-        created_at: new Date().toISOString(),
-      };
-      onSend(fileMsg);
-      await sendFileMessage(roomId, trimmed, file);
-    }
-
-    // 텍스트만 있는 경우
-    else if (text.trim()) {
-      const textMsg: Message = {
-        id: Date.now(),
-        room_id: roomId,
-        sender: trimmed as "학생" | "교수",
-        type: "text",
-        text: text.trim(),
-        created_at: new Date().toISOString(),
-      };
-      onSend(textMsg);
-      await sendTextMessage(roomId, trimmed, text);
-    }
-
+  // 파일 메시지 전송
+  const fileResponse = await sendFileMessage(roomId, trimmed, file);
+  onSend(fileResponse);
+}
+else if (file) {
+  const fileResponse = await sendFileMessage(roomId, trimmed, file);
+  onSend(fileResponse);
+}
+else if (text.trim()) {
+  const textMsg: Message = {
+    id: Date.now(),
+    room_id: roomId,
+    sender: trimmed as "학생" | "교수",
+    type: "text",
+    text: text.trim(),
+    created_at: new Date().toISOString(),
+  };
+  onSend(textMsg);
+  await sendTextMessage(roomId, trimmed, text);
+}
     // 상태 초기화
     setText("");
     setFile(null);

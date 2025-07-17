@@ -27,8 +27,11 @@ export async function sendFileMessage(roomId: number, sender: string, file: File
   formData.append("file", file);
   
 
-  return fetch(`${API_URL}/messages/file/`, {
+  const res = await fetch(`${API_URL}/messages/file/`, {
     method: "POST",
     body: formData,
   });
+
+  const data = await res.json(); // ✅ 여기서 JSON 파싱!
+  return data;
 }
