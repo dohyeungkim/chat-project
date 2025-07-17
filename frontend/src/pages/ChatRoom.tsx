@@ -21,8 +21,18 @@ const ChatRoom: React.FC = () => {
     ws.onopen = () => console.log("✅ WebSocket 연결됨");
 
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setMessages((prev) => [...prev, data]);
+      try {
+        const msg: Message = JSON.parse(event.data);
+
+        // 파일 메시지 content가 /static/ 경로가 아니면 보정
+        if (msg.type === "file" && typeof msg.content === "string" && !msg.content.startsWith("/static/")) {
+          msg.content = `/static/${msg.content}`;
+        }
+
+        setMessages((prev) => [...prev, msg]);
+      } catch (err) {
+        console.error("WebSocket 메시지 파싱 오류:", err);
+      }
     };
 
     ws.onclose = () => console.log("🔌 WebSocket 연결 종료됨");
