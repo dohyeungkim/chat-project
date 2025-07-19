@@ -12,7 +12,7 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
-  const handleSend = async () => {
+const handleSend = async () => {
   const trimmed = sender.trim();
 
   if (trimmed !== "학생" && trimmed !== "교수") {
@@ -20,51 +20,23 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
     return;
   }
 
-  if (!text.trim() && !file) return; // 내용이 모두 없으면 무시
+  if (!text.trim() && !file) return;
 
   try {
-    // 텍스트 + 파일 모두 있는 경우
     if (file && text.trim()) {
-  // 텍스트 메시지 전송
-  const textMsg: Message = {
-    id: Date.now(),
-    room_id: roomId,
-    sender: trimmed as "학생" | "교수",
-    type: "text",
-    text: text.trim(),
-    created_at: new Date().toISOString(),
-  };
-  onSend(textMsg);
-  await sendTextMessage(roomId, trimmed, text);
-
-  // 파일 메시지 전송
-  const fileResponse = await sendFileMessage(roomId, trimmed, file);
-  onSend(fileResponse);
-}
-else if (file) {
-  const fileResponse = await sendFileMessage(roomId, trimmed, file);
-  onSend(fileResponse);
-}
-else if (text.trim()) {
-  const textMsg: Message = {
-    id: Date.now(),
-    room_id: roomId,
-    sender: trimmed as "학생" | "교수",
-    type: "text",
-    text: text.trim(),
-    created_at: new Date().toISOString(),
-  };
-  onSend(textMsg);
-  await sendTextMessage(roomId, trimmed, text);
-}
-    // 상태 초기화
+      await sendTextMessage(roomId, trimmed, text);
+      await sendFileMessage(roomId, trimmed, file);
+    } else if (file) {
+      await sendFileMessage(roomId, trimmed, file);
+    } else if (text.trim()) {
+      await sendTextMessage(roomId, trimmed, text);
+    }
     setText("");
     setFile(null);
   } catch (err) {
     console.error("메시지 전송 오류:", err);
   }
 };
-
   return (
     <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
       <select value={sender} onChange={(e) => setSender(e.target.value)}>
