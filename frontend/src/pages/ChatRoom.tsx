@@ -38,25 +38,25 @@ const ChatRoom: React.FC = () => {
     ws.onclose = () => console.log("🔌 WebSocket 연결 종료됨");
 
     return () => ws.close();
-  }, [roomId, refresh]);
+  }, [roomId]);
 
   useEffect(() => {
     if (!roomId){
       console.error("❗roomId가 없습니다. useParams 확인 필요.");
-    return;
+      return;
     }
 
     const roomNumber = parseInt(roomId, 10);
     if (isNaN(roomNumber)) {
-    console.error("❗roomId가 숫자가 아닙니다:", roomId);
-    return;
-  }
+      console.error("❗roomId가 숫자가 아닙니다:", roomId);
+      return;
+    }
 
     // 기존 채팅 불러오기
     fetchMessages(roomNumber).then((data) => {
-    setMessages(data);
+      setMessages(data);
     });
-  }, [roomId, refresh]);
+  }, [roomId]);
 
   const handleSend = async (newMsg: Message, file?: File) => {
     const roomNumber = Number(roomId);
