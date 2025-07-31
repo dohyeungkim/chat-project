@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import { Message } from "../types/Message"
 import { sendTextMessage, sendFileMessage } from "../api/chat";
 
@@ -6,7 +6,7 @@ interface Props {
   roomId: number;
   onSend: (message: Message) => void;
   refresh: boolean;
-  setRefresh: (refresh: boolean) => void
+  setRefresh: Dispatch<SetStateAction<boolean>>
 }
 
 const ChatInput: React.FC<Props> = ({ roomId, onSend, refresh, setRefresh }) => {
@@ -36,7 +36,7 @@ const handleSend = async () => {
     setText("");
     setFile(null);
 
-    setRefresh(!refresh);
+    setRefresh((prev: boolean)  => !prev);
   } catch (err) {
     console.error("메시지 전송 오류:", err);
   }
