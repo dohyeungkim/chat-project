@@ -11,6 +11,9 @@ const ChatRoom: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const [messages, setMessages] = useState<Message[]>([]);
   const socketRef = useRef<WebSocket | null>(null);
+  
+  // 추가된 부분
+  const [refresh, setRefresh] = useState<boolean>(false);
 
   useEffect(() => {
     if (!roomId) return;
@@ -26,7 +29,7 @@ const ChatRoom: React.FC = () => {
         if (msg.type === "file") {
           console.log("파일 URL:", msg.content);  // 여기가 적용 위치입니다
         }
-        setMessages((prev) => [...prev, msg]);
+        setMessages((prev) => [...prev, msg]); 
       } catch (err) {
         console.error("WebSocket 메시지 파싱 오류:", err);
       }
@@ -35,7 +38,7 @@ const ChatRoom: React.FC = () => {
     ws.onclose = () => console.log("🔌 WebSocket 연결 종료됨");
 
     return () => ws.close();
-  }, [roomId]);
+  }, [roomId, refresh]);
 
   useEffect(() => {
     if (!roomId){
@@ -53,7 +56,7 @@ const ChatRoom: React.FC = () => {
     fetchMessages(roomNumber).then((data) => {
     setMessages(data);
     });
-  }, [roomId]);
+  }, [roomId, refresh]);
 
   const handleSend = async (newMsg: Message, file?: File) => {
     const roomNumber = Number(roomId);
@@ -63,6 +66,7 @@ const ChatRoom: React.FC = () => {
     } else if (newMsg.type === "file" && file) {
       // 파일 메시지는 서버에서 저장 및 WebSocket broadcast 처리
       const response = await sendFileMessage(roomNumber, newMsg.sender, file);
+
       // 서버에서 broadcast 되므로 클라이언트는 따로 추가할 필요 없음
     }
   };
@@ -71,7 +75,7 @@ const ChatRoom: React.FC = () => {
     <div>
       <h2>채팅방 {roomId}</h2>
       <ChatList messages={messages} />
-      <ChatInput roomId={Number(roomId)} onSend={handleSend} />
+      <ChatInput roomId={Number(roomId)} onSend={handleSend} refresh={refresh} setRefresh={setRefresh} />
     </div>
   );
 };

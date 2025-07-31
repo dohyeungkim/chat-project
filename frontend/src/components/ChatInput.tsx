@@ -5,9 +5,11 @@ import { sendTextMessage, sendFileMessage } from "../api/chat";
 interface Props {
   roomId: number;
   onSend: (message: Message) => void;
+  refresh: boolean;
+  setRefresh: (refresh: boolean) => void
 }
 
-const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
+const ChatInput: React.FC<Props> = ({ roomId, onSend, refresh, setRefresh }) => {
   const [sender, setSender] = useState("");
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -33,6 +35,8 @@ const handleSend = async () => {
     }
     setText("");
     setFile(null);
+
+    setRefresh(!refresh);
   } catch (err) {
     console.error("메시지 전송 오류:", err);
   }
