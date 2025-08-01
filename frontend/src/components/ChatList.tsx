@@ -43,9 +43,9 @@ const ChatList: React.FC<Props> = ({ messages }) => {
               </div>
 
               {/* 텍스트 메시지 출력 */}
-              {(msg.text || (msg.type === "text" && content)) && (
+              {((msg.type === "text" && content)) && (
                 <span style={{ marginLeft: "0.5rem" }}>
-                  {msg.text || content}
+                  {content}
                 </span>
               )}
 

@@ -17,7 +17,6 @@ const ChatRoom: React.FC = () => {
 
   useEffect(() => {
     if (!roomId) return;
-
     const ws = new WebSocket(`${BACKEND_WS_BASE}/ws/chat/${roomId}`);
     socketRef.current = ws;
 
@@ -56,13 +55,14 @@ const ChatRoom: React.FC = () => {
     fetchMessages(roomNumber).then((data) => {
       setMessages(data);
     });
+
   }, [roomId]);
 
   const handleSend = async (newMsg: Message, file?: File) => {
     const roomNumber = Number(roomId);
     if (newMsg.type === "text") {
       setMessages((prev) => [...prev, newMsg]);
-      await sendTextMessage(roomNumber, newMsg.sender, newMsg.text || "");
+      await sendTextMessage(roomNumber, newMsg.sender, newMsg.content || "");
     } else if (newMsg.type === "file" && file) {
       // 파일 메시지는 서버에서 저장 및 WebSocket broadcast 처리
       const response = await sendFileMessage(roomNumber, newMsg.sender, file);

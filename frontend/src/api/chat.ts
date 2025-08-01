@@ -23,7 +23,7 @@ export async function sendTextMessage(roomId: number, sender: string, content: s
 
 export async function sendFileMessage(roomId: number, sender: string, file: File) {
   const formData = new FormData();
-  formData.append("room_id", String(roomId));
+  formData.append("room_id", roomId.toString());
   formData.append("sender", sender);
   formData.append("type", "file");
   formData.append("file", file);
