@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.users import get_db
 from app.dependencies import get_current_user
-from app import models
+from .models import User, Room
+
 
 router = APIRouter(prefix="/rooms")
 
