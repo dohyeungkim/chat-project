@@ -6,6 +6,7 @@ from app import models
 from app.users import get_db
 import json
 import os
+from datetime import datetime
 
 router = APIRouter()
 STATIC_BASE_URL = "https://chat-project-1-av9p.onrender.com/static"
@@ -51,16 +52,13 @@ async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
             await websocket.close(code=4003)
             return
 
-        # 3. Handshake 통과 후, accept() 호출
         print(f"[WS_OK] {user.username}({user.id}) 방 {room_id} handshake 통과!", flush=True)
         await websocket.accept()
-        
-        # 4. 메시지 송수신 루프 (모든 log/예외/실패/정상 print로 체크!)
+
         while True:
             try:
                 raw_data = await websocket.receive_text()
                 print(f"[WS_RECV] raw_data from {user.username}/{user.id}: {raw_data}", flush=True)
-                # 4-1. JSON 파싱
                 try:
                     data = json.loads(raw_data)
                 except Exception as e:
@@ -75,10 +73,22 @@ async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
                     await websocket.send_json({"error": "type/content 빠짐!"})
                     continue
 
-                # 4-2. 정상 메시지 처리/로깅
+                # 🔥 파일 메시지는 실제 다운로드 가능한 URL로 변환
+                if msg_type == "file" and content and not str(content).startswith("http"):
+                    content = f"{STATIC_BASE_URL}/{content}"
+
+                # 당장 echo로만 내려보내지만, 나중에 브로드캐스트·DB저장도 가능!
+                message = {
+                    # id, room_id 등은 필요에 따라 추가
+                    "room_id": int(room_id),
+                    "type": msg_type,
+                    "sender": user.username,
+                    "content": content,
+                    "created_at": datetime.now().isoformat(),
+                }
+
                 print(f"[WS_OK] 정상 메시지: {msg_type}/{content}", flush=True)
-                # 예시: echo (실제 서비스라면 broadcast나 DB 저장 등 추가)
-                await websocket.send_json({"echo": { "type": msg_type, "content": content }})
+                await websocket.send_json({"echo": message})
 
             except Exception as e:
                 print(f"[WS_ERROR] 수신/처리 중 예외: {e}", flush=True)

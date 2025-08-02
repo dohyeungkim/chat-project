@@ -1,13 +1,12 @@
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, { useState } from "react";
 
 interface Props {
   roomId: number;
   onSend: (msg: { type: string; content: string }) => void;
-  refresh: boolean;
-  setRefresh: Dispatch<SetStateAction<boolean>>;
 }
 
-const ChatInput: React.FC<Props> = ({ roomId, onSend, refresh, setRefresh }) => {
+// refresh, setRefresh 등 불필요! (실시간 반영은 ws.onmessage에서)
+const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
@@ -18,18 +17,16 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend, refresh, setRefresh }) => 
     }
     onSend({ type: "chat", content: text.trim() });
     setText("");
-    setRefresh(r => !r);
   };
 
-  const handleFileSend = async () => {
+  const handleFileSend = () => {
     if (!file) {
       alert("파일을 먼저 선택하세요.");
       return;
     }
-    // 이 예시는 "파일이름만 ws로 전송" (백엔드에서 파일처리, 업로드 완료 후 경로/uuid 넘기는 게 더 안전!)
+    // 실제 파일 업로드는 따로 구현 필요(여기선 이름만 전송)
     onSend({ type: "file", content: file.name });
     setFile(null);
-    setRefresh(r => !r);
   };
 
   return (

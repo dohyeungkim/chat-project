@@ -1,29 +1,35 @@
 import React from "react";
 import { Message } from "../types/Message";
 
-const ChatList: React.FC<{ messages: Message[] }> = ({ messages }) => {
-  return (
-    <div>
-      {messages.map((msg) => {
-        const content = msg.content ?? "";
-        const isImage = /\.(png|jpe?g|gif|webp|bmp)$/i.test(content);
-        const sender = msg.sender?.trim();
-        return (
-          <div key={msg.id} style={{ marginBottom: 10 }}>
-            <b>{sender}</b> <span>({new Date(msg.created_at).toLocaleTimeString()})</span>
-            {msg.type === "text" && <div>{content}</div>}
-            {msg.type === "file" && content && (
-              isImage
-                ? <img src={content} alt="첨부이미지" width={180} />
-                : <a href={content} target="_blank" rel="noopener noreferrer">
-                    📎 파일 다운로드: {decodeURIComponent(content.split("/").pop() || "파일")}
-                  </a>
+interface Props {
+  messages: Message[];
+}
+
+// idx는 반드시 map 두번째 인자로!
+const ChatList: React.FC<Props> = ({ messages }) => (
+  <div>
+    {messages.map((msg, idx) => (
+      <div key={msg.id ?? msg.created_at ?? `${msg.sender}_${idx}`}>
+        <span>[{msg.type}] {msg.sender}:</span>{" "}
+        {msg.type === "file" && msg.content ? (
+          <a
+            href={msg.content}
+            download
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "blue", textDecoration: "underline" }}
+          >
+            {decodeURIComponent(
+              msg.content.split("/").pop() || "파일 다운로드"
             )}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
+          </a>
+        ) : (
+          <span>{msg.content}</span>
+        )}
+      </div>
+    ))}
+  </div>
+);
 
 export default ChatList;
+
