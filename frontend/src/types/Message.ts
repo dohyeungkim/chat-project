@@ -1,8 +1,8 @@
 export interface Message {
   id: number;
   room_id: number;
-  sender: "학생" | "교수";
-  type: "text" | "file";     // 주 메시지 유형 (여전히 사용 가능)           
-  content?: string;          // 파일 이름 (있을 수도 있음)
+  sender: string; // "학생" | "교수" | 사용자 이름
+  type: "text" | "file";
+  content?: string;
   created_at: string;
 }

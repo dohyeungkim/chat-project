@@ -1,6 +1,5 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
-from app.websocket.manager import ConnectionManager  # <- 파일·클래스 정확한지 확인!
-from app.dependencies import get_current_user_for_ws # <- 상대→절대 import로 권장
+from app.websocket.manager import ConnectionManager  
 from jose import JWTError, jwt
 from app import models
 import os
