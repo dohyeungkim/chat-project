@@ -1,6 +1,6 @@
 from fastapi import APIRouter, WebSocket, Query
 from jose import JWTError, jwt
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from app import models
 from app.users import get_db
@@ -12,11 +12,14 @@ STATIC_BASE_URL = "https://chat-project-1-av9p.onrender.com/static"
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
-def extract_user_from_token(token: str, db) -> models.User:
+
+def extract_user_from_token(token: str, db: Session) -> models.User:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("user_id")
-        return db.query(models.User).filter(models.User.id == user_id).first()
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        print(f"[WS_DEBUG] token user_id={user_id} -> user={getattr(user, 'id', None)}", flush=True)
+        return user
     except JWTError:
         return None
 
@@ -31,7 +34,7 @@ async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
             await websocket.close(code=4001)
             return
 
-        # ⭐️ "참가자 관계"를 ORM 관계 대신 중간테이블에서 직접 확인!
+        # 중간 테이블 직접 쿼리로 참가자 관계 체크!
         rel = db.execute(
             models.room_user_table.select().where(
                 and_(
@@ -41,6 +44,7 @@ async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
             )
         ).fetchone()
 
+        print(f"[WS_DEBUG] 참가 관계 fetch: {rel} (room_id={room_id}, user_id={user.id})", flush=True)
         if not rel:
             print(f"[DEBUG] 참가 관계 없음! room_id={room_id}, user_id={user.id}", flush=True)
             await websocket.send_json({"error": "방 참가자가 아닙니다. 방 재입장/새로고침 이후 시도!"})
@@ -48,6 +52,15 @@ async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
             return
 
         print(f"[WS_OK] {user.username}({user.id}) 방 {room_id} handshake 통과!", flush=True)
-        # ...이후 manager.connect 등 기존 WebSocket 로직 진행
+
+        # 연결 성공! (이후 추가적인 메시지 처리)
+        # WebSocket 매니저 관리, 메시지 송수신 등...
+        while True:
+            raw_data = await websocket.receive_text()
+            data = json.loads(raw_data)
+            # 메시지 처리 등 (이하 파트는 필요에 따라 추가)
+    except Exception as e:
+        print(f"[WS_ERROR] 예외: {e}", flush=True)
+        await websocket.close(code=4006)
     finally:
         db.close()
