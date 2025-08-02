@@ -27,26 +27,33 @@ def extract_user_from_token(token: str, db) -> models.User:
 async def chat_ws(websocket: WebSocket, room_id: str, token: str = Query(...)):
     db = next(get_db())
     try:
-        # 1. 토큰(인증) 및 유저 추출
+        print(f"[WS] 🟡 WebSocket 진입: room_id={room_id}, token={token[:10]}...", flush=True)
+
         user = extract_user_from_token(token, db)
         if not user:
-            print(f"[WS] JWT 인증 실패(token={token[:12]}...)")
+            print(f"[WS_FAIL] 🔴 JWT 인증 실패(token={token[:10]}...)", flush=True)
+            await websocket.send_json({"error": "JWT 인증 실패(재로그인 필요)"})
             await websocket.close(code=4001)
             return
-        # 2. 방 존재/유저 참가자 검사
+
         room = db.query(models.Room).filter(models.Room.id == int(room_id)).first()
         if not room:
-            print(f"[WS] 방 {room_id} 없음")
-            await websocket.close(code=4003)
-            return
-        user_ids = [u.id for u in room.users]
-        if user.id not in user_ids:
-            print(f"[WS] 유저 {user.username}({user.id})는 방 참가자 X. 참가자: {user_ids}")
+            print(f"[WS_FAIL] 🔴 방 {room_id} 없음", flush=True)
+            await websocket.send_json({"error": f"방 {room_id} 없음"})
             await websocket.close(code=4003)
             return
 
-        print(f"[WS] 유저 {user.username}({user.id}) in 방 {room_id} 입장성공")
+        user_ids = [u.id for u in room.users]
+        print(f"[WS/DEBUG] 방 {room_id} 참가자: {user_ids}, 내ID: {user.id}", flush=True)
+        if user.id not in user_ids:
+            print(f"[WS_FAIL] 🔴 유저 {user.username}({user.id}) 참가자 아님(403)! 현재 참가자: {user_ids}", flush=True)
+            await websocket.send_json({"error": "방 참가자가 아닙니다. join API를 통해 참가해주세요."})
+            await websocket.close(code=4003)
+            return
+
+        print(f"[WS_OK] ✅ {user.username}({user.id}) 방 {room_id} WS handshake 성공", flush=True)
         await manager.connect(websocket, room_id)
+
         try:
             while True:
                 raw_data = await websocket.receive_text()
@@ -55,7 +62,6 @@ async def chat_ws(websocket: WebSocket, room_id: str, token: str = Query(...)):
                     msg_type = data.get("type")
                     content = data.get("content")
                     sender = user.username
-                    # 파일형이면 content url 수정
                     if msg_type == "file" and content and not content.startswith("http"):
                         content = f"{STATIC_BASE_URL}/{content}"
                     message = {
@@ -64,14 +70,13 @@ async def chat_ws(websocket: WebSocket, room_id: str, token: str = Query(...)):
                         "type": msg_type,
                         "content": content,
                     }
-                    # 메시지 브로드캐스트
                     await manager.broadcast(json.dumps(message), room_id)
                 except Exception as e:
-                    print(f"[WS] 메시지 파싱/브로드캐스트 에러: {e} (raw: {raw_data})")
+                    print(f"[WS_ERROR] 메시지 파싱/브로드캐스트 오류: {e} (raw: {raw_data})", flush=True)
         except WebSocketDisconnect:
-            print(f"[WS] 유저 {user.username}({user.id}) 방 {room_id} 연결끊김")
+            print(f"[WS_CLOSE] 유저 {user.username}({user.id}) 방 {room_id} 연결끊김", flush=True)
             manager.disconnect(websocket, room_id)
         except Exception as e:
-            print(f"[WS] 예상치 못한 에러: {e}")
+            print(f"[WS_ERROR] 예외 발생: {e}", flush=True)
     finally:
         db.close()
