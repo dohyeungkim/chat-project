@@ -52,6 +52,7 @@ async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
             return
 
         print(f"[WS_OK] {user.username}({user.id}) 방 {room_id} handshake 통과!", flush=True)
+        await websocket.accept()
 
         # 연결 성공! (이후 추가적인 메시지 처리)
         # WebSocket 매니저 관리, 메시지 송수신 등...
