@@ -21,7 +21,7 @@ def get_db():
     finally:
         db.close()
 
-@router.post("/auth/signup")
+@router.post("/auth/signup/")
 def auth_signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
     if db_user:
@@ -63,7 +63,7 @@ def auth_signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
         }
     }
 
-@router.post("/auth/login")
+@router.post("/auth/login/")
 def auth_login(user: schemas.UserLogin, db: Session = Depends(get_db)):
     db_user = crud.authenticate_user(db, user.username, user.password)
     if not db_user:
