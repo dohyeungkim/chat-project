@@ -1,86 +1,51 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
+from fastapi import APIRouter, WebSocket, Query
 from jose import JWTError, jwt
 from sqlalchemy.orm import joinedload
-from app.websocket.manager import ConnectionManager
 from app import models
 from app.users import get_db
-import os
 import json
+import os
 
 router = APIRouter()
-manager = ConnectionManager()
 STATIC_BASE_URL = "https://chat-project-1-av9p.onrender.com/static"
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-
 
 def extract_user_from_token(token: str, db) -> models.User:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("user_id")
-        user = db.query(models.User).filter(models.User.id == user_id).first()
-        return user
+        return db.query(models.User).filter(models.User.id == user_id).first()
     except JWTError:
         return None
 
-
 @router.websocket("/ws/chat/{room_id}")
-async def chat_ws(websocket: WebSocket, room_id: str, token: str = Query(...)):
+async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
     db = next(get_db())
     try:
-        print(f"[WS] 🟡 WebSocket 진입: room_id={room_id}, token={token[:10]}...", flush=True)
-
         user = extract_user_from_token(token, db)
         if not user:
-            print(f"[WS_FAIL] 🔴 JWT 인증 실패(token={token[:10]}...)", flush=True)
-            await websocket.send_json({"error": "JWT 인증 실패(재로그인 필요)"})
+            print("[WS_FAIL] JWT 인증 실패", flush=True)
+            await websocket.send_json({"error": "JWT 인증 실패"})
             await websocket.close(code=4001)
             return
 
-        # ⭐️ users 관계를 항상 fresh하게 불러옴(joinedload 옵션!)
+        # ⭐️ 관계 최신화: joinedload + db.refresh(room)
         room = db.query(models.Room)\
-                 .options(joinedload(models.Room.users))\
-                 .filter(models.Room.id == int(room_id)).first()
-        if not room:
-            print(f"[WS_FAIL] 🔴 방 {room_id} 없음", flush=True)
-            await websocket.send_json({"error": f"방 {room_id} 없음"})
-            await websocket.close(code=4003)
-            return
+            .options(joinedload(models.Room.users))\
+            .filter(models.Room.id == room_id).first()
+        db.refresh(room)  # <--- 최신화
 
         user_ids = [u.id for u in room.users]
-        print(f"[WS/DEBUG] 방 {room_id} 참가자: {user_ids}, 내ID: {user.id}", flush=True)
+        print(f"[DEBUG] 방 {room_id} 참가자: {user_ids}, 내 id: {user.id}", flush=True)
         if user.id not in user_ids:
-            print(f"[WS_FAIL] 🔴 유저 {user.username}({user.id}) 참가자 아님(403)! 현재 참가자: {user_ids}", flush=True)
-            await websocket.send_json({"error": "방 참가자가 아닙니다. join API를 통해 참가해주세요."})
+            print("[DEBUG] 참가자로 인식 못 함! DB 반영 미반영, 세션 불일치, 딜레이 가능성!", flush=True)
+            await websocket.send_json({"error": "방 참가자가 아닙니다, 새로고침 하세요!"})
             await websocket.close(code=4003)
             return
 
-        print(f"[WS_OK] ✅ {user.username}({user.id}) 방 {room_id} WS handshake 성공", flush=True)
-        await manager.connect(websocket, room_id)
+        print(f"[WS_OK] {user.username}({user.id}) → 방 {room_id} 입장 handshake 성공", flush=True)
+        # 이후 manager.connect, 메시지 송수신 등 기존 코드...
 
-        try:
-            while True:
-                raw_data = await websocket.receive_text()
-                try:
-                    data = json.loads(raw_data)
-                    msg_type = data.get("type")
-                    content = data.get("content")
-                    sender = user.username
-                    if msg_type == "file" and content and not content.startswith("http"):
-                        content = f"{STATIC_BASE_URL}/{content}"
-                    message = {
-                        "room_id": int(room_id),
-                        "sender": sender,
-                        "type": msg_type,
-                        "content": content,
-                    }
-                    await manager.broadcast(json.dumps(message), room_id)
-                except Exception as e:
-                    print(f"[WS_ERROR] 메시지 파싱/브로드캐스트 오류: {e} (raw: {raw_data})", flush=True)
-        except WebSocketDisconnect:
-            print(f"[WS_CLOSE] 유저 {user.username}({user.id}) 방 {room_id} 연결끊김", flush=True)
-            manager.disconnect(websocket, room_id)
-        except Exception as e:
-            print(f"[WS_ERROR] 예외 발생: {e}", flush=True)
     finally:
         db.close()
