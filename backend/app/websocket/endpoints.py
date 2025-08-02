@@ -1,11 +1,11 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
-from app.websocket.manager import ConnectionManager  
 from jose import JWTError, jwt
+from sqlalchemy.orm import joinedload
+from app.websocket.manager import ConnectionManager
 from app import models
 from app.users import get_db
-from app import models
 import os
-import json  # <- 꼭 추가!
+import json
 
 router = APIRouter()
 manager = ConnectionManager()
@@ -13,8 +13,8 @@ STATIC_BASE_URL = "https://chat-project-1-av9p.onrender.com/static"
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
+
 def extract_user_from_token(token: str, db) -> models.User:
-    
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("user_id")
@@ -22,6 +22,7 @@ def extract_user_from_token(token: str, db) -> models.User:
         return user
     except JWTError:
         return None
+
 
 @router.websocket("/ws/chat/{room_id}")
 async def chat_ws(websocket: WebSocket, room_id: str, token: str = Query(...)):
@@ -36,7 +37,10 @@ async def chat_ws(websocket: WebSocket, room_id: str, token: str = Query(...)):
             await websocket.close(code=4001)
             return
 
-        room = db.query(models.Room).filter(models.Room.id == int(room_id)).first()
+        # ⭐️ users 관계를 항상 fresh하게 불러옴(joinedload 옵션!)
+        room = db.query(models.Room)\
+                 .options(joinedload(models.Room.users))\
+                 .filter(models.Room.id == int(room_id)).first()
         if not room:
             print(f"[WS_FAIL] 🔴 방 {room_id} 없음", flush=True)
             await websocket.send_json({"error": f"방 {room_id} 없음"})
