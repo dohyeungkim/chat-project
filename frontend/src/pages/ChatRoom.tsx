@@ -28,25 +28,32 @@ const ChatRoom: React.FC = () => {
   }
 
   // 1. 먼저 방 입장(POST /api/rooms/{roomId}/join) 선행 - 성공 시 joined 상태 true
-  useEffect(() => {
-    if (!roomId || !token) return;
-    fetch(`${API_URL}/api/rooms/${roomId}/join`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => {
-        if (res.ok) {
-          setJoined(true);
-        } else {
-          alert("방 입장 실패(권한/토큰 문제)");
-          navigate("/");
-        }
-      })
-      .catch(() => {
-        alert("방 입장 요청 중 오류 발생");
+useEffect(() => {
+  if (!roomId || !token) return;
+  fetch(`${API_URL}/api/rooms/${roomId}/join`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+  })
+    .then(async res => {
+      if (res.ok) setJoined(true);
+      else {
+        let msg = "방 입장 실패(권한/토큰 문제)";
+        try {
+          const body = await res.json();
+          msg = body.detail || msg;
+        } catch {}
+        alert(msg);
         navigate("/");
-      });
-  }, [roomId, token, navigate]);
+      }
+    })
+    .catch(() => {
+      alert("방 입장 요청 오류 발생");
+      navigate("/");
+    });
+}, [roomId, token, navigate]);
 
   // 2. joined==true일 때만 WebSocket 연결
   useEffect(() => {
@@ -57,13 +64,20 @@ const ChatRoom: React.FC = () => {
     socketRef.current = ws;
     ws.onopen = () => console.log("✅ WebSocket 연결됨");
     ws.onmessage = (event) => {
-      try {
-        const msg: Message = JSON.parse(event.data);
-        setMessages((prev) => [...prev, msg]);
-      } catch (err) {
-        console.error("WebSocket 파싱 오류:", err);
+    try {
+      const data = JSON.parse(event.data);
+      // ① 서버가 에러 메시지를 보낼 때
+      if (data.error) {
+        alert(`WebSocket 오류: ${data.error}`);
+        ws.close();      // (필요하다면 즉시 연결 종료)
+        return;
       }
-    };
+      // ② 정상 메시지는 그대로 처리
+      setMessages((prev) => [...prev, data]);
+    } catch (err) {
+      console.error("WebSocket 파싱 오류:", err);
+    }
+  };
     ws.onclose = () => console.log("🔌 WebSocket 연결 종료됨");
     return () => ws.close();
     // joined, roomId, token, refresh 바뀔 때만 재실행
