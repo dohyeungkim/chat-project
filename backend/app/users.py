@@ -28,21 +28,13 @@ def auth_signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="이미 존재하는 사용자명입니다")
     new_user = crud.create_user(db, user.username, user.password)
 
-    # ---------- [추가] JWT 토큰 발급 ----------
-    from jose import jwt
-    from datetime import datetime, timedelta
-    SECRET_KEY = os.getenv("SECRET_KEY")
-    ALGORITHM = os.getenv("ALGORITHM", "HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES = 60
-
     access_token = jwt.encode({
         "sub": new_user.username,
         "user_id": new_user.id,
         "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     }, SECRET_KEY, algorithm=ALGORITHM)
 
-    # ---------- [추가] 1:1 채팅방 자동 생성 ----------
-    from app import models
+    
     room_name = f"{new_user.username}_room"
     room = db.query(models.Room).filter(models.Room.name == room_name).first()
     if not room:
