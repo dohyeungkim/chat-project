@@ -11,7 +11,7 @@ export default function Signup({ onSignup }: { onSignup: () => void }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("https://chat-project-1-av9p.onrender.com/api/auth/signup/", {
+      const res = await fetch("https://chat-project-1-av9p.onrender.com/api/users/auth/signup/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
