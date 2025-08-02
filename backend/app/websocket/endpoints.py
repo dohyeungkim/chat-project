@@ -1,40 +1,59 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from .manager import ConnectionManager
-import json
-from datetime import datetime
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
+from app.websocket.manager import ConnectionManager  # <- 파일·클래스 정확한지 확인!
+from app.dependencies import get_current_user_for_ws # <- 상대→절대 import로 권장
+from jose import JWTError, jwt
+from app import models
+import os
+import json  # <- 꼭 추가!
 
 router = APIRouter()
 manager = ConnectionManager()
-
-# ✅ 배포된 백엔드 서버 주소
 STATIC_BASE_URL = "https://chat-project-1-av9p.onrender.com/static"
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+
+def extract_user_from_token(token: str, db) -> models.User:
+    from app import models
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("user_id")
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        return user
+    except JWTError:
+        return None
 
 @router.websocket("/ws/chat/{room_id}")
-async def chat_ws(websocket: WebSocket, room_id: str):
-    await manager.connect(websocket)
+async def chat_ws(websocket: WebSocket, room_id: str, token: str = Query(...)):
+    from app.users import get_db
+    db = next(get_db())
     try:
-        while True:
-            raw_data = await websocket.receive_text()
-            data = json.loads(raw_data)
+        user = extract_user_from_token(token, db)
+        if not user:
+            await websocket.close(code=4001)
+            return
+        room = db.query(models.Room).filter(models.Room.id == int(room_id)).first()
+        if not room or user not in room.users:
+            await websocket.close(code=4003)
+            return
 
-            # 메시지 내용 추출
-            msg_type = data.get("type")
-            content = data.get("content")
-            sender = data.get("sender")
-
-            # ✅ 파일이면 전체 URL로 변환
-            if msg_type == "file" and not content.startswith("http"):
-                content = f"{STATIC_BASE_URL}/{content}"
-
-            message = {
-                "id": int(datetime.now().timestamp() * 1000),
-                "room_id": int(room_id),
-                "sender": sender,
-                "type": msg_type,
-                "content": content,
-                "created_at": datetime.utcnow().isoformat()
-            }
-
-            await manager.broadcast(json.dumps(message))  # 문자열로 직렬화해서 전송
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        await manager.connect(websocket, room_id)
+        try:
+            while True:
+                raw_data = await websocket.receive_text()
+                data = json.loads(raw_data)
+                msg_type = data.get("type")
+                content = data.get("content")
+                sender = user.username
+                if msg_type == "file" and not content.startswith("http"):
+                    content = f"{STATIC_BASE_URL}/{content}"
+                message = {
+                    "room_id": int(room_id),
+                    "sender": sender,
+                    "type": msg_type,
+                    "content": content,
+                }
+                await manager.broadcast(json.dumps(message), room_id)
+        except WebSocketDisconnect:
+            manager.disconnect(websocket, room_id)
+    finally:
+        db.close() 

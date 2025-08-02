@@ -1,14 +1,14 @@
-const API_URL = "https://chat-project-av9p.onrender.com";
+export const API_URL = "https://chat-project-1-av9p.onrender.com";
 
 export async function fetchMessages(roomId: number) {
   const res = await fetch(
-    `${API_URL}/messages?room_id=${roomId}`
+    `${API_URL}/api/messages?room_id=${roomId}`
   );
   return res.json();
 }
 
 export async function sendTextMessage(roomId: number, sender: string, content: string) {
-  const res = await fetch(`${API_URL}/messages/`, {
+  const res = await fetch(`${API_URL}/api/messages/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ 
@@ -29,7 +29,7 @@ export async function sendFileMessage(roomId: number, sender: string, file: File
   formData.append("file", file);
   
 
-  const res = await fetch(`${API_URL}/messages/file/`, {
+  const res = await fetch(`${API_URL}/api/messages/file/`, {
     method: "POST",
     body: formData,
   });

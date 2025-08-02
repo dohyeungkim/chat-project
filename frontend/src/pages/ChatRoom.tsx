@@ -37,7 +37,7 @@ const ChatRoom: React.FC = () => {
     ws.onclose = () => console.log("🔌 WebSocket 연결 종료됨");
 
     return () => ws.close();
-  }, [roomId]);
+  }, [roomId, refresh]);
 
   useEffect(() => {
     if (!roomId){
@@ -56,7 +56,7 @@ const ChatRoom: React.FC = () => {
       setMessages(data);
     });
 
-  }, [roomId]);
+  }, [roomId, refresh]);
 
   const handleSend = async (newMsg: Message, file?: File) => {
     const roomNumber = Number(roomId);
@@ -69,6 +69,8 @@ const ChatRoom: React.FC = () => {
 
       // 서버에서 broadcast 되므로 클라이언트는 따로 추가할 필요 없음
     }
+
+    setRefresh((prev: boolean)  => !prev);
   };
 
   return (

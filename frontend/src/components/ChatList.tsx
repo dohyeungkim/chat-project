@@ -1,5 +1,6 @@
 import React from "react";
 import { Message } from "../types/Message";
+import { API_URL } from "../api/chat";
 
 interface Props {
   messages: Message[];
@@ -54,13 +55,16 @@ const ChatList: React.FC<Props> = ({ messages }) => {
                 <div style={{ marginTop: "0.5rem" }}>
                   {isImage ? (
                     <img
-                      src={content}
-                      alt="보낸 이미지"
+                      src={`${API_URL}/api/messages/file/${encodeURIComponent(content)}`}
+                      alt="uploaded"
                       style={{ maxWidth: "200px", display: "block" }}
                     />
                   ) : (
-                    <a href={content} download style={{ color: "blue" }}>
-                      📎 파일 다운로드: {decodeURIComponent(content.split("/").pop() ?? "파일")}
+                    <a href={`${API_URL}/api/messages/file/${encodeURIComponent(content)}`} 
+                    download style={{ color: "blue" }}
+                    target="_blank"
+                    rel="noopener noreferrer">
+                      📎 파일 다운로드: {decodeURIComponent(content.split("/").pop() || "파일")}
                     </a>
                   )}
                 </div>
