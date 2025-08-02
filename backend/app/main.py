@@ -10,13 +10,6 @@ from fastapi.staticfiles import StaticFiles
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-app.include_router(users.router, prefix="/api")
-app.include_router(rooms.router, prefix="/api")
-app.include_router(messages.router, prefix="/api")
-
-app.mount("/static", StaticFiles(directory="uploaded_files"), name="static")
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "https://reliable-creponne-b6d576.netlify.app"],
@@ -24,3 +17,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/static", StaticFiles(directory="uploaded_files"), name="static")
+
+app.include_router(users.router, prefix="/api")
+app.include_router(rooms.router, prefix="/api")
+app.include_router(messages.router, prefix="/api")
