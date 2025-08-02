@@ -3,8 +3,8 @@ from fastapi import FastAPI
 from app import models
 from app.database import engine
 from app.routes import messages
-from app.routes import rooms                        # rooms 라우터 추가 등록!
-from app.routes import users                        # users 라우터 추가 등록!
+from . import rooms                        # rooms 라우터 추가 등록!
+from . import users                        # users 라우터 추가 등록!
 from fastapi.staticfiles import StaticFiles
 
 models.Base.metadata.create_all(bind=engine)
