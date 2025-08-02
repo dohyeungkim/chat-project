@@ -1,6 +1,7 @@
 from fastapi import APIRouter, WebSocket, Query
 from jose import JWTError, jwt
 from sqlalchemy.orm import joinedload
+from sqlalchemy import and_
 from app import models
 from app.users import get_db
 import json
@@ -30,22 +31,24 @@ async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
             await websocket.close(code=4001)
             return
 
-        # ⭐️ 관계 최신화: joinedload + db.refresh(room)
-        room = db.query(models.Room)\
-            .options(joinedload(models.Room.users))\
-            .filter(models.Room.id == room_id).first()
-        db.refresh(room)  # <--- 최신화
+        # ORM 관계는 유지하되,
+        # 중간 테이블 직접 쿼리로 참가자 관계 "최종 보호" (캐시관계, 슬로우 리플리카 대책)
+        rel = db.execute(
+            models.room_user_table.select().where(
+                and_(
+                    models.room_user_table.c.room_id == room_id,
+                    models.room_user_table.c.user_id == user.id
+                )
+            )
+        ).fetchone()
 
-        user_ids = [u.id for u in room.users]
-        print(f"[DEBUG] 방 {room_id} 참가자: {user_ids}, 내 id: {user.id}", flush=True)
-        if user.id not in user_ids:
-            print("[DEBUG] 참가자로 인식 못 함! DB 반영 미반영, 세션 불일치, 딜레이 가능성!", flush=True)
-            await websocket.send_json({"error": "방 참가자가 아닙니다, 새로고침 하세요!"})
+        if not rel:
+            print(f"[DEBUG] 참가 관계 없음! room_id={room_id}, user_id={user.id}", flush=True)
+            await websocket.send_json({"error": "방 참가자가 아닙니다(DB 기준). 새로고침 또는 재입장 이후 시도!"})
             await websocket.close(code=4003)
             return
 
-        print(f"[WS_OK] {user.username}({user.id}) → 방 {room_id} 입장 handshake 성공", flush=True)
-        # 이후 manager.connect, 메시지 송수신 등 기존 코드...
-
+        print(f"[WS_OK] {user.username}({user.id}) 방 {room_id} handshake 확정 통과!", flush=True)
+        # 이하 생략
     finally:
         db.close()
