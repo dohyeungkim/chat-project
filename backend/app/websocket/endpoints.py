@@ -31,8 +31,7 @@ async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
             await websocket.close(code=4001)
             return
 
-        # ORM 관계는 유지하되,
-        # 중간 테이블 직접 쿼리로 참가자 관계 "최종 보호" (캐시관계, 슬로우 리플리카 대책)
+        # ⭐️ "참가자 관계"를 ORM 관계 대신 중간테이블에서 직접 확인!
         rel = db.execute(
             models.room_user_table.select().where(
                 and_(
@@ -44,11 +43,11 @@ async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
 
         if not rel:
             print(f"[DEBUG] 참가 관계 없음! room_id={room_id}, user_id={user.id}", flush=True)
-            await websocket.send_json({"error": "방 참가자가 아닙니다(DB 기준). 새로고침 또는 재입장 이후 시도!"})
+            await websocket.send_json({"error": "방 참가자가 아닙니다. 방 재입장/새로고침 이후 시도!"})
             await websocket.close(code=4003)
             return
 
-        print(f"[WS_OK] {user.username}({user.id}) 방 {room_id} handshake 확정 통과!", flush=True)
-        # 이하 생략
+        print(f"[WS_OK] {user.username}({user.id}) 방 {room_id} handshake 통과!", flush=True)
+        # ...이후 manager.connect 등 기존 WebSocket 로직 진행
     finally:
         db.close()
