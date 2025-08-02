@@ -26,15 +26,13 @@ def auth_signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="이미 존재하는 사용자명입니다")
-    new_user = crud.create_user(db, user.username, user.password)
-
+    new_user = crud.create_user(db, user.username, user.password, user.role)
     access_token = jwt.encode({
         "sub": new_user.username,
         "user_id": new_user.id,
+        "role": new_user.role,
         "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     }, SECRET_KEY, algorithm=ALGORITHM)
-
-    
     room_name = f"{new_user.username}_room"
     room = db.query(models.Room).filter(models.Room.name == room_name).first()
     if not room:
@@ -45,13 +43,12 @@ def auth_signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
         room.users.append(new_user)
         db.commit()
     room_id = room.id
-
-    # ---------- [수정된 응답] ----------
     return {
         "token": access_token,
         "room_id": room_id,
         "user": {
-            "username": new_user.username
+            "username": new_user.username,
+            "role": new_user.role     # role도 같이 반환!
         }
     }
 
@@ -63,10 +60,9 @@ def auth_login(user: schemas.UserLogin, db: Session = Depends(get_db)):
     access_token = jwt.encode({
         "sub": db_user.username,
         "user_id": db_user.id,
+        "role": db_user.role,
         "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     }, SECRET_KEY, algorithm=ALGORITHM)
-
-    # 로그인시 내 방 가져오기(없으면 생성)
     room_name = f"{db_user.username}_room"
     room = db.query(models.Room).filter(models.Room.name == room_name).first()
     if not room:
@@ -77,11 +73,11 @@ def auth_login(user: schemas.UserLogin, db: Session = Depends(get_db)):
         room.users.append(db_user)
         db.commit()
     room_id = room.id
-
     return {
         "token": access_token,
         "room_id": room_id,
         "user": {
-            "username": db_user.username
+            "username": db_user.username,
+            "role": db_user.role
         }
     }

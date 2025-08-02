@@ -27,6 +27,7 @@ class RoomBase(BaseModel):
 class UserCreate(BaseModel):
     username: str
     password: str
+    role: str
 
 class UserLogin(BaseModel):
     username: str
@@ -35,6 +36,7 @@ class UserLogin(BaseModel):
 class UserResponse(BaseModel):
     id: int
     username: str
+    role: str
     class Config:
         orm_mode = True
 
