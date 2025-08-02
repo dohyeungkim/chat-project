@@ -1,10 +1,8 @@
 import React, { Dispatch, SetStateAction, useState } from "react";
-import { sendTextMessage, sendFileMessage } from "../api/chat";
-import { getToken, decodeToken } from "../utils/jwt";
 
 interface Props {
   roomId: number;
-  onSend: () => void;
+  onSend: (msg: { type: string; content: string }) => void;
   refresh: boolean;
   setRefresh: Dispatch<SetStateAction<boolean>>;
 }
@@ -13,56 +11,42 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend, refresh, setRefresh }) => 
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
-  const token = getToken();
-  const userInfo = decodeToken(token);
-
-  if (!userInfo) return <div>로그인이 필요합니다.</div>;
-
-  // 예: 유저 role 정보 및 이름 표시
-  const username = userInfo.username || "";
-  const role = userInfo.role || "";
-
-  const handleSend = async () => {
-    if (!text.trim() && !file) return;
-    try {
-      if(file && text.trim()) {
-        await sendTextMessage(roomId, text);
-        await sendFileMessage(roomId, file);
-      } else if(file) {
-        await sendFileMessage(roomId, file);
-      } else if(text.trim()) {
-        await sendTextMessage(roomId, text);
-      }
-      setText("");
-      setFile(null);
-      setRefresh((prev) => !prev);
-      onSend();
-    } catch (err: any) {
-      if (err.message === "인증 필요") {
-        alert("인증 정보가 없어 자동 로그아웃합니다.");
-        localStorage.clear();
-        window.location.href = "/login";
-      } else {
-        alert("메시지 전송 실패");
-      }
+  const handleTextSend = () => {
+    if (!text.trim()) {
+      alert("메시지를 입력하세요.");
+      return;
     }
+    onSend({ type: "chat", content: text.trim() });
+    setText("");
+    setRefresh(r => !r);
+  };
+
+  const handleFileSend = async () => {
+    if (!file) {
+      alert("파일을 먼저 선택하세요.");
+      return;
+    }
+    // 이 예시는 "파일이름만 ws로 전송" (백엔드에서 파일처리, 업로드 완료 후 경로/uuid 넘기는 게 더 안전!)
+    onSend({ type: "file", content: file.name });
+    setFile(null);
+    setRefresh(r => !r);
   };
 
   return (
     <div>
-      <div>
-        로그인 계정: <b>{role ? `${role} (${username})` : username}</b>
-      </div>
       <input
         value={text}
         onChange={e => setText(e.target.value)}
         placeholder="메시지 입력"
+        onKeyDown={e => { if (e.key === "Enter") handleTextSend(); }}
       />
+      <button onClick={handleTextSend}>전송</button>
       <input
         type="file"
         onChange={e => setFile(e.target.files?.[0] || null)}
+        accept="*"
       />
-      <button onClick={handleSend}>보내기</button>
+      <button onClick={handleFileSend}>파일 전송</button>
     </div>
   );
 };
