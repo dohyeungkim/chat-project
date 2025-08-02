@@ -13,16 +13,13 @@ def get_my_rooms(
 ):
     return current_user.rooms
 
-@router.post("/{room_id}/join")
-def join_room(
-    room_id: int,
-    current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    room = db.query(models.Room).filter(models.Room.id == room_id).first()
+@router.post("/rooms/{room_id}/join")
+def join_room(room_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    room = db.query(Room).filter(Room.id == room_id).first()
     if not room:
-        raise HTTPException(status_code=404, detail="Room not found")
+        raise HTTPException(status_code=404, detail="방이 없습니다")
     if current_user not in room.users:
         room.users.append(current_user)
-        db.commit()
-    return {"message": "채팅방 입장 완료"}
+        db.commit()  # 반드시 커밋
+        return {"detail": "방에 참가 완료"}
+    return {"detail": "이미 참가한 방"}

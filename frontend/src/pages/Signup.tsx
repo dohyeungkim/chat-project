@@ -11,22 +11,25 @@ export default function Signup({ onSignup }: { onSignup: () => void }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("https://chat-project-1-av9p.onrender.com/api/users/auth/signup/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) throw new Error("회원가입 실패");
-      // room_id, token 등 필요하면 응답처리
-      const { token, room_id, user } = await res.json();
-      localStorage.setItem("token", token);
-      localStorage.setItem("room_id", `${room_id}`);
-      localStorage.setItem("username", user.username);
-      onSignup();
-    } catch {
-      setError("회원가입에 실패했습니다.");
+        const res = await fetch("https://chat-project-1-av9p.onrender.com/api/users/auth/signup/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(form),
+        });
+        if (!res.ok) {
+            // 서버에서 내려주는 상세 에러메시지(필드누락, 중복 등)
+            const data = await res.json();
+            throw new Error(data.detail || "회원가입 실패");
+        }
+        const { token, room_id, user } = await res.json();
+        localStorage.setItem("token", token);
+        localStorage.setItem("room_id", `${room_id}`);
+        localStorage.setItem("username", user.username);
+        onSignup();
+    } catch (err: any) {
+        setError(err.message || "회원가입에 실패했습니다.");
     }
-  };
+};
 
   return (
     <form onSubmit={handleSubmit}>
