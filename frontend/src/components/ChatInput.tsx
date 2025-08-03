@@ -21,26 +21,21 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
   };
 
   const handleFileSend = async () => {
-    if (!file) {
-      alert("파일을 먼저 선택하세요.");
-      return;
-    }
-    setIsUploading(true);
-    try {
-      // 1. 파일 업로드 (백엔드 저장, DB 메시지 등록)
-      const data = await sendFileMessage(roomId, file);
-      // 2. ws로 파일 메시지 알림 (content: uuid_원본명)
-      onSend({
-        type: "file",
-        content: data.content,
-      });
-      setFile(null);
-    } catch (err) {
-      alert("파일 업로드/전송 실패: " + String(err));
-    } finally {
-      setIsUploading(false);
-    }
-  };
+  if (!file) {
+    alert("파일을 먼저 선택하세요!");
+    return;
+  }
+  try {
+    console.log("[FRONT][업로드 시작] file 객체:", file);
+    const data = await sendFileMessage(roomId, file);
+    console.log("[FRONT][업로드 응답] 서버 반환값:", data);
+    onSend({ type: "file", content: data.content });
+    setFile(null);
+  } catch (err) {
+    console.error("[FRONT][업로드 에러]:", err);
+    alert("파일 업로드 실패: " + String(err));
+  }
+};
 
   return (
     <div>

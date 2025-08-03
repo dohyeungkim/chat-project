@@ -51,32 +51,46 @@ def upload_file_message(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    room = db.query(models.Room).filter(models.Room.id == room_id).first()
-    if not room or current_user not in room.users:
-        raise HTTPException(status_code=403, detail="채팅방 참가자가 아닙니다.")
-
-    filename = ""
+    print("----- 파일 업로드 요청 디버깅 -----", flush=True)
+    print(f"[1] API 호출됨: room_id={room_id}, user={getattr(current_user, 'username', None)}", flush=True)
+    print(f"[2] 파일 파라미터(file): {file}", flush=True)
     if file:
+        print(f"[3] file.filename: {file.filename}", flush=True)
+        abs_upload_dir = os.path.abspath(UPLOAD_DIR)
+        print(f"[4] 파일 저장경로(절대): {abs_upload_dir}", flush=True)
+        if not os.path.exists(abs_upload_dir):
+            print(f"[WARN] 업로드 폴더 없음! {abs_upload_dir} → 새로 생성", flush=True)
+            os.makedirs(abs_upload_dir, exist_ok=True)
         filename = f"{uuid.uuid4().hex}_{file.filename}"
         file_path = os.path.join(UPLOAD_DIR, filename)
+        print(f"[5] 최종 저장 경로: {file_path}", flush=True)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
+        print(f"[6] 실제 파일 저장 완료: {file_path}", flush=True)
+        # 저장 후 폴더 내용 보기
+        filelist = os.listdir(UPLOAD_DIR)
+        print(f"[7] 현재 uploaded_files 파일 목록: {filelist}", flush=True)
+    else:
+        print("[ERROR] file=None: 실제 파일이 전달되지 않음! 프론트 업로드 코드/네트워크탭 확인!!!", flush=True)
+    print("----- 업로드 디버깅 종료 -----\n", flush=True)
 
+    # (이하는 메시지 생성 및 저장 파트)
     message = models.Message(
         room_id=room_id,
         sender=current_user.username,
         type=type,
-        content=filename or content,
+        content=filename if file else content,
     )
     db.add(message)
     db.commit()
     db.refresh(message)
+    print(f"[8] DB 메시지 저장됨: id={message.id}, type={message.type}, content={message.content}", flush=True)
     return {
         "id": message.id,
         "room_id": message.room_id,
         "sender": message.sender,
         "type": message.type,
-        "content": filename and f"{filename}",
+        "content": message.content,
         "created_at": message.created_at.isoformat(),
     }
 
@@ -85,6 +99,9 @@ def upload_file_message(
 def get_uploaded_file(filename: str):
     decoded_filename = unquote(filename)
     file_path = os.path.join(UPLOAD_DIR, decoded_filename)
+    print(f"[DOWNLOAD] 파일 다운로드 요청: {file_path}", flush=True)
     if not os.path.exists(file_path):
+        print(f"[DOWNLOAD] 파일 없음 (404): {decoded_filename}", flush=True)
         raise HTTPException(status_code=404, detail="File not found")
+    print(f"[DOWNLOAD] 파일 다운로드 시작: {file_path}", flush=True)
     return FileResponse(path=file_path, filename=decoded_filename, media_type="application/octet-stream")
