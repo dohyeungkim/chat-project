@@ -13,7 +13,6 @@ STATIC_BASE_URL = "https://chat-project-1-av9p.onrender.com/static"
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
-# JWT에서 user 추출 함수
 def extract_user_from_token(token: str, db: Session) -> models.User:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -28,7 +27,6 @@ def extract_user_from_token(token: str, db: Session) -> models.User:
 async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
     db = next(get_db())
     try:
-        # 1. JWT 인증
         user = extract_user_from_token(token, db)
         if not user:
             print("[WS_FAIL] JWT 인증 실패", flush=True)
@@ -36,7 +34,6 @@ async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
             await websocket.close(code=4001)
             return
 
-        # 2. 방-유저 참가자 관계 체크(중간테이블 직접조회)
         rel = db.execute(
             models.room_user_table.select().where(
                 and_(
@@ -48,7 +45,7 @@ async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
         print(f"[WS_DEBUG] 참가 관계 fetch: {rel} (room_id={room_id}, user_id={user.id})", flush=True)
         if not rel:
             print(f"[DEBUG] 참가 관계 없음! room_id={room_id}, user_id={user.id}", flush=True)
-            await websocket.send_json({"error": "방 참가자가 아닙니다. 방 재입장/새로고침 이후 시도!"})
+            await websocket.send_json({"error": "방 참가자가 아닙니다."})
             await websocket.close(code=4003)
             return
 
@@ -73,22 +70,33 @@ async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
                     await websocket.send_json({"error": "type/content 빠짐!"})
                     continue
 
-                # 🔥 파일 메시지는 실제 다운로드 가능한 URL로 변환
+                # 파일이면 STATIC_BASE_URL prefix 추가 (다운로드 링크 완성)
                 if msg_type == "file" and content and not str(content).startswith("http"):
                     content = f"{STATIC_BASE_URL}/{content}"
 
-                # 당장 echo로만 내려보내지만, 나중에 브로드캐스트·DB저장도 가능!
-                message = {
-                    # id, room_id 등은 필요에 따라 추가
-                    "room_id": int(room_id),
-                    "type": msg_type,
-                    "sender": user.username,
-                    "content": content,
-                    "created_at": datetime.now().isoformat(),
-                }
+                # 🚩 진짜 DB 저장
+                db_message = models.Message(
+                    room_id=room_id,
+                    sender=user.username,
+                    type=msg_type,
+                    content=content,
+                    created_at=datetime.now(),
+                )
+                db.add(db_message)
+                db.commit()
+                db.refresh(db_message)
+                print(f"[WS_OK] DB 메시지 저장: id={db_message.id}, type={db_message.type}, content={db_message.content}", flush=True)
 
-                print(f"[WS_OK] 정상 메시지: {msg_type}/{content}", flush=True)
-                await websocket.send_json({"echo": message})
+                # 프론트에 저장된 메시지 정보 내려주기
+                response = {
+                    "id": db_message.id,
+                    "room_id": db_message.room_id,
+                    "sender": db_message.sender,
+                    "type": db_message.type,
+                    "content": db_message.content,
+                    "created_at": db_message.created_at.isoformat(),
+                }
+                await websocket.send_json(response)
 
             except Exception as e:
                 print(f"[WS_ERROR] 수신/처리 중 예외: {e}", flush=True)
