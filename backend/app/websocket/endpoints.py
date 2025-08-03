@@ -71,8 +71,8 @@ async def chat_ws(websocket: WebSocket, room_id: int, token: str = Query(...)):
                     continue
 
                 # 파일이면 STATIC_BASE_URL prefix 추가 (다운로드 링크 완성)
-                if msg_type == "file" and content and not str(content).startswith("http"):
-                    content = f"{STATIC_BASE_URL}/{content}"
+                if msg_type == "file" and content and str(content).startswith(STATIC_BASE_URL):
+                    content = content.split("/")[-1]
 
                 # 🚩 진짜 DB 저장
                 db_message = models.Message(

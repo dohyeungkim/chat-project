@@ -11,7 +11,7 @@ const ChatList: React.FC<Props> = ({ messages }) => (
   <div>
     {messages.map((msg, idx) => {
       // 파일 메시지라면 uuid_뒤의 "실제 원본 파일명"을 추출
-      let filename = undefined;
+      let filename: string | undefined = undefined;
       if (msg.type === "file" && msg.content) {
         const split = msg.content.split("_");
         if (split.length > 1) {
@@ -28,9 +28,7 @@ const ChatList: React.FC<Props> = ({ messages }) => (
 
       return (
         <div key={msg.id ?? msg.created_at ?? `${msg.sender}_${idx}`}>
-          <span>
-            [{msg.type}] {msg.sender}:
-          </span>{" "}
+          <span>[{msg.type}] {msg.sender}:</span>{" "}
           {msg.type === "file" && msg.content ? (
             <a
               href={fileUrl}
