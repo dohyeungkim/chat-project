@@ -4,6 +4,7 @@ import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import ChatRoom from "./pages/ChatRoom";
 import Home from "./pages/Home";
+import "./App.css";
 
 function AppRoutes() {
   const navigate = useNavigate();

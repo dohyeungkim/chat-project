@@ -26,7 +26,7 @@ def auth_signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="이미 존재하는 사용자명입니다")
-    new_user = crud.create_user(db, user.username, user.password, user.role)
+    new_user = crud.create_user(db, user.username, user.password, user.role, user.name)
     access_token = jwt.encode({
         "sub": new_user.username,
         "user_id": new_user.id,
@@ -81,3 +81,11 @@ def auth_login(user: schemas.UserLogin, db: Session = Depends(get_db)):
             "role": db_user.role
         }
     }
+# users.py (교수/학생 목록)
+@router.get("/professors/", response_model=list[schemas.UserResponse])
+def get_professors(db: Session = Depends(get_db)):
+    return db.query(models.User).filter(models.User.role == 'professor').all()
+
+@router.get("/students/", response_model=list[schemas.UserResponse])
+def get_students(db: Session = Depends(get_db)):
+    return db.query(models.User).filter(models.User.role == 'student').all()

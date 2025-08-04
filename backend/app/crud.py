@@ -14,9 +14,9 @@ def create_message(db: Session, message: schemas.MessageCreate):
 def get_messages(db: Session, room_id: int):
     return db.query(models.Message).filter(models.Message.room_id == room_id).order_by(models.Message.created_at).all()
 
-def create_user(db: Session, username: str, password: str, role):
+def create_user(db: Session, username: str, password: str, role: str, name: str):
     hashed = pwd_context.hash(password)
-    db_user = models.User(username=username, password_hash=hashed, role=role)
+    db_user = models.User(username=username, password_hash=hashed, role=role, name=name)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

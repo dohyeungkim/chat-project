@@ -23,6 +23,7 @@ class User(Base):
     username = Column(String, unique=True, nullable=False, index=True)
     password_hash = Column(String, nullable=False)
     role = Column(String, nullable=False)
+    name = Column(String)
     rooms = relationship("Room", secondary=room_user_table, back_populates="users")
 
 class Message(Base):

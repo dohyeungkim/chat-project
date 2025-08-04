@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { sendFileMessage } from "../api/chat"; // 파일 업로드용 api 함수 import
+import { sendFileMessage } from "../api/chat";
 
 interface Props {
   roomId: number;
@@ -21,39 +21,47 @@ const ChatInput: React.FC<Props> = ({ roomId, onSend }) => {
   };
 
   const handleFileSend = async () => {
-  if (!file) {
-    alert("파일을 먼저 선택하세요!");
-    return;
-  }
-  try {
-    console.log("[FRONT][업로드 시작] file 객체:", file);
-    const data = await sendFileMessage(roomId, file);
-    console.log("[FRONT][업로드 응답] 서버 반환값:", data);
-    onSend({ type: "file", content: data.content });
-    setFile(null);
-  } catch (err) {
-    console.error("[FRONT][업로드 에러]:", err);
-    alert("파일 업로드 실패: " + String(err));
-  }
-};
+    if (!file) {
+      alert("파일을 먼저 선택하세요!");
+      return;
+    }
+    setIsUploading(true);
+    try {
+      const data = await sendFileMessage(roomId, file);
+      onSend({ type: "file", content: data.content });
+      setFile(null);
+    } catch (err) {
+      alert("파일 업로드 실패: " + String(err));
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
-    <div>
+    <div className="chatroom-input-box">
       <input
+        type="text"
         value={text}
         onChange={e => setText(e.target.value)}
         placeholder="메시지 입력"
         onKeyDown={e => { if (e.key === "Enter") handleTextSend(); }}
         disabled={isUploading}
       />
-      <button onClick={handleTextSend} disabled={isUploading || !text.trim()}>전송</button>
       <input
         type="file"
+        style={{ display: "none" }}
+        id="file-upload"
         onChange={e => setFile(e.target.files?.[0] || null)}
         accept="*"
         disabled={isUploading}
       />
-      {file && <span style={{ marginLeft: 8 }}>{file.name}</span>}
+      <label htmlFor="file-upload" className="file-upload-label">
+        📁
+      </label>
+      {file && (
+        <span className="selected-file">{file.name}</span>
+      )}
+      <button onClick={handleTextSend} disabled={isUploading}>전송</button>
       <button onClick={handleFileSend} disabled={isUploading || !file}>파일 전송</button>
     </div>
   );

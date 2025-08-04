@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+
 import { fetchMessages, API_URL } from "../api/chat";
 import { getToken } from "../utils/jwt";
 import ChatList from "../components/ChatList";
@@ -8,16 +9,27 @@ import { Message } from "../types/Message";
 
 const BACKEND_WS_BASE = "wss://chat-project-1-av9p.onrender.com";
 
+// 사용자 타입 정의
+type User = {
+  id: number;
+  username: string;
+  name: string;
+  role: string;
+};
+
 const ChatRoom: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [joined, setJoined] = useState(false);
+  const [opponent, setOpponent] = useState<{ name: string; username: string } | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const navigate = useNavigate();
   const token = getToken();
   const myRoomId = localStorage.getItem("room_id");
+  const myUsername = localStorage.getItem("username");
+  const myRole = localStorage.getItem("role");
 
-  // 1. 권한/진입 검사 (렌더 중단은 useEffect에서만)
+  // 권한/방 진입 검사
   useEffect(() => {
     if (!token || !myRoomId) {
       navigate("/login");
@@ -26,7 +38,7 @@ const ChatRoom: React.FC = () => {
     }
   }, [token, myRoomId, roomId, navigate]);
 
-  // 2. 방 입장(POST) 처리
+  // 방 입장
   useEffect(() => {
     if (!roomId || !token) return;
     fetch(`${API_URL}/api/rooms/${roomId}/join`, {
@@ -46,7 +58,7 @@ const ChatRoom: React.FC = () => {
       });
   }, [roomId, token, navigate]);
 
-  // 3. 최초 입장시 only: REST API 한번 fetch!
+  // 메시지 불러오기
   useEffect(() => {
     if (!roomId) return;
     fetchMessages(Number(roomId))
@@ -56,9 +68,34 @@ const ChatRoom: React.FC = () => {
         localStorage.clear();
         navigate("/login");
       });
-  }, [roomId, navigate]); // refresh 등 의존성 없이 "최초"만! (핵심)
+  }, [roomId, navigate]);
 
-  // 4. joined일 때만 WebSocket 연결 및 메시지 실시간 반영
+  // 상대방 정보 찾기
+  useEffect(() => {
+    if (!messages.length || !myUsername || !myRole) return;
+
+    // 내 username이 아닌 sender 찾기(=상대방 username)
+    const opponentUsername = messages
+      .map(m => m.sender)
+      .find(sender => sender !== myUsername);
+
+    if (!opponentUsername) return;
+
+    // 상대 목록을 내 역할 반대로 fetch: 내가 학생이면 교수, 내가 교수면 학생 목록에서 찾기
+    const targetApi =
+      myRole === "student"
+        ? "/api/users/professors/"
+        : "/api/users/students/";
+
+    fetch(API_URL + targetApi)
+      .then(res => res.json())
+      .then((users: User[]) => {
+        const user = users.find(u => u.username === opponentUsername);
+        setOpponent(user || null);
+      });
+  }, [messages, myUsername, myRole]);
+
+  // WebSocket 연결 및 수신
   useEffect(() => {
     if (!roomId || !token || !joined) return;
     const ws = new WebSocket(`${BACKEND_WS_BASE}/ws/chat/${roomId}?token=${token}`);
@@ -66,26 +103,12 @@ const ChatRoom: React.FC = () => {
 
     ws.onopen = () => console.log("✅ WebSocket 연결됨");
 
-    ws.onmessage = (event) => {
+    ws.onmessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
-        console.log("[WS_RECV]", data);
-
         if (data.error) {
           alert("WebSocket 에러: " + data.error);
           ws.close();
-          return;
-        }
-        if (data.echo) {
-          setMessages(prev => [
-            ...prev,
-            {
-              ...data.echo,
-              sender: "me",
-              created_at: new Date().toISOString(),
-              // 필요 시 고유 id 생성: id: `local-${Date.now()}`
-            }
-          ]);
           return;
         }
         setMessages(prev => [...prev, data]);
@@ -106,19 +129,18 @@ const ChatRoom: React.FC = () => {
     };
   }, [roomId, token, joined]);
 
-  // 5. 메시지 전송 함수 (ws readyState, 구조 등 반드시 검증!)
+  // 메시지 전송 처리
   const handleSend = (msg: { type: string; content: string }) => {
     const ws = socketRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       alert("WebSocket이 아직 연결되지 않았습니다.\n잠시 후 새로고침해 주세요.");
       return;
     }
-    if (!msg || typeof msg !== "object" || !msg.type || !msg.content) {
+    if (!msg?.type || !msg?.content) {
       alert("메시지 형식 오류 (type/content 누락)");
       return;
     }
     try {
-      console.log("[WS_SEND]", msg);
       ws.send(JSON.stringify(msg));
     } catch (e) {
       alert("메시지 전송 실패: " + String(e));
@@ -127,15 +149,17 @@ const ChatRoom: React.FC = () => {
   };
 
   return (
-    <div>
-      <h2>채팅방 {roomId}</h2>
-      <ChatList messages={messages} />
-      <ChatInput
-        roomId={Number(roomId)}
-        onSend={handleSend}
-      />
+  <div className="chatroom-container">
+    <div className="chatroom-header">
+      {/* 상대 이름이 있으면 표시, 없으면 기존대로 */}
+      {opponent
+        ? `${opponent.name}님과의 대화 (${opponent.username})`
+        : `채팅방 ${roomId}`}
     </div>
-  );
+    <ChatList messages={messages} />
+    <ChatInput roomId={Number(roomId)} onSend={handleSend} />
+  </div>
+);
 };
 
 export default ChatRoom;

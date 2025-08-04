@@ -28,6 +28,7 @@ class UserCreate(BaseModel):
     username: str
     password: str
     role: str
+    name: str
 
 class UserLogin(BaseModel):
     username: str
@@ -38,6 +39,7 @@ class UserResponse(BaseModel):
     id: int
     username: str
     role: str
+    name: str
     class Config:
         orm_mode = True
 

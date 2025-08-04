@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 export default function Signup({ onSignup }: { onSignup: () => void }) {
-  const [form, setForm] = useState({ username: "", password: "", role: "학생" });
+  const [form, setForm] = useState({ username: "", password: "", role: "학생", name: "" });
   const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -31,17 +31,18 @@ export default function Signup({ onSignup }: { onSignup: () => void }) {
     }
 };
 
-  return (
+    return (
     <form onSubmit={handleSubmit}>
       <h2>회원가입</h2>
-      <input name="username" placeholder="아이디" required value={form.username} onChange={handleChange} />
-      <input name="password" type="password" placeholder="비밀번호" required value={form.password} onChange={handleChange} />
+      <input name="username" value={form.username} onChange={handleChange} placeholder="ID" />
+      <input type="password" name="password" value={form.password} onChange={handleChange} placeholder="비밀번호" />
+      <input name="name" value={form.name} onChange={handleChange} placeholder="이름" required />
       <select name="role" value={form.role} onChange={handleChange}>
         <option value="학생">학생</option>
         <option value="교수">교수</option>
       </select>
       <button type="submit">회원가입</button>
-      {error && <div style={{color:"red"}}>{error}</div>}
+      {error && <div style={{ color: "red" }}>{error}</div>}
     </form>
   );
 }
