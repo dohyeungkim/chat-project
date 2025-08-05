@@ -14,6 +14,8 @@ export default function Home() {
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
   const userId = localStorage.getItem("user_id");
+
+  console.log("role in localStorage:", role);
   const [list, setList] = useState<User[]>([]);
 
   // 교수/학생 목록 불러오기
@@ -27,6 +29,8 @@ export default function Home() {
 
   // 채팅하기 버튼 클릭
   const handleChat = async (targetUser: User) => {
+    const userId = localStorage.getItem("user_id");
+    console.log("handleChat userId:", userId, "role:", role, "targetUser.id:", targetUser.id);
     const studentId = role === "student" ? userId : targetUser.id;
     const professorId = role === "professor" ? userId : targetUser.id;
     const res = await fetch(

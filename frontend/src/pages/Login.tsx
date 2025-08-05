@@ -18,9 +18,12 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
       });
       if (!res.ok) throw new Error("로그인 실패");
       const { token, user, room_id } = await res.json();
+      console.log("user after signup/login", user);
       localStorage.setItem("token", token);
       localStorage.setItem("room_id", `${room_id}`);
       localStorage.setItem("username", user.username);
+      localStorage.setItem("role", user.role);
+      localStorage.setItem("user_id", user.id); 
       onLogin();
     } catch {
       setError("로그인에 실패했습니다.");

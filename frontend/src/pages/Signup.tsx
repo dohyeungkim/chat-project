@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 export default function Signup({ onSignup }: { onSignup: () => void }) {
-  const [form, setForm] = useState({ username: "", password: "", role: "학생", name: "" });
+  const [form, setForm] = useState({ username: "", password: "", role: "student", name: "" });
   const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -17,14 +17,16 @@ export default function Signup({ onSignup }: { onSignup: () => void }) {
             body: JSON.stringify(form),
         });
         if (!res.ok) {
-            // 서버에서 내려주는 상세 에러메시지(필드누락, 중복 등)
             const data = await res.json();
             throw new Error(data.detail || "회원가입 실패");
         }
         const { token, room_id, user } = await res.json();
+        console.log("응답 user:", user);
         localStorage.setItem("token", token);
         localStorage.setItem("room_id", `${room_id}`);
         localStorage.setItem("username", user.username);
+        localStorage.setItem("role", user.role);
+        localStorage.setItem("user_id", user.id); 
         onSignup();
     } catch (err: any) {
         setError(err.message || "회원가입에 실패했습니다.");

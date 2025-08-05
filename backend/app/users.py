@@ -47,6 +47,7 @@ def auth_signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
         "token": access_token,
         "room_id": room_id,
         "user": {
+            "id": new_user.id,
             "username": new_user.username,
             "role": new_user.role     # role도 같이 반환!
         }
@@ -77,6 +78,7 @@ def auth_login(user: schemas.UserLogin, db: Session = Depends(get_db)):
         "token": access_token,
         "room_id": room_id,
         "user": {
+            "id": db_user.id,
             "username": db_user.username,
             "role": db_user.role
         }
