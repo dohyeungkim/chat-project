@@ -38,8 +38,8 @@ export default function Signup({ onSignup }: { onSignup: () => void }) {
       <input type="password" name="password" value={form.password} onChange={handleChange} placeholder="비밀번호" />
       <input name="name" value={form.name} onChange={handleChange} placeholder="이름" required />
       <select name="role" value={form.role} onChange={handleChange}>
-        <option value="학생">학생</option>
-        <option value="교수">교수</option>
+        <option value="student">학생</option>
+        <option value="professor">교수</option>
       </select>
       <button type="submit">회원가입</button>
       {error && <div style={{ color: "red" }}>{error}</div>}

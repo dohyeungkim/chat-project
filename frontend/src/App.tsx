@@ -9,17 +9,11 @@ import "./App.css";
 function AppRoutes() {
   const navigate = useNavigate();
 
-  const handleAuth = () => {
-    const room_id = localStorage.getItem("room_id");
-    if (room_id) navigate(`/chat/${room_id}`);
-    else navigate("/");
-  };
-
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/signup" element={<Signup onSignup={handleAuth} />} />
-      <Route path="/login" element={<Login onLogin={handleAuth} />} />
+      <Route path="/signup" element={<Signup onSignup={()=> navigate("/")} />} />
+      <Route path="/login" element={<Login onLogin={()=> navigate("/")} />} />
       <Route path="/chat/:roomId" element={<ChatRoom />} />
     </Routes>
   );
