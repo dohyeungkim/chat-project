@@ -13,7 +13,7 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://reliable-creponne-b6d576.netlify.app"],
+    allow_origins=["https://chat-project-2-ttox.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
