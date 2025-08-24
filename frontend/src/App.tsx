@@ -5,6 +5,11 @@ import Login from "./pages/Login";
 import ChatRoom from "./pages/ChatRoom";
 import Home from "./pages/Home";
 import "./App.css";
+import "./Home.css";
+import "./Login.css";
+import "./Signup.css";
+import "./ChatList.css";
+import "./ChatRoom.css";
 
 function AppRoutes() {
   const navigate = useNavigate();

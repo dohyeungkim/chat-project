@@ -1,0 +1,46 @@
+/* ChatInput.css */
+.chat-input-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chat-input-box input[type="text"] {
+  flex: 1 1 0px;
+  border: 1.5px solid #b7c0d7;
+  border-radius: 20px;
+  padding: 12px 18px;
+  font-size: 16px;
+  background: #f7fafc;
+  margin-right: 10px;
+}
+
+.chat-input-box input[type="file"] {
+  display: none;
+}
+
+.chat-input-box .file-label {
+  display: inline-block;
+  background: #dbe9fa;
+  color: #2456a7;
+  border-radius: 14px;
+  padding: 7px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 5px;
+}
+.chat-input-box button {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 18px;
+  font-size: 16px;
+  padding: 10px 22px;
+  cursor: pointer;
+  box-shadow: 0 1px 5px #0002;
+}
+.chat-input-box button:disabled {
+  background: #b7c0d7;
+  color: #eee;
+  cursor: not-allowed;
+}

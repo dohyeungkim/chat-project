@@ -1,0 +1,110 @@
+.home-outer {
+  min-height: 100vh;
+  background: #f5f8fc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.home-card {
+  width: 420px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+  padding: 42px 32px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.home-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.home-logout {
+  background: none;
+  border: none;
+  color: #fa5c4f;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.home-btn-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.home-btn {
+  background: #238fff;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 26px;
+  cursor: pointer;
+}
+.home-btn:hover {
+  background: #136ddd;
+}
+
+.home-list-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1558a0;
+  margin-bottom: 7px;
+}
+
+.home-user-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.home-user-item {
+  background: #f3f8fc;
+  border-radius: 8px;
+  padding: 13px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: box-shadow 0.15s;
+  box-shadow: 0 1px 3px rgba(35,143,255,0.03);
+}
+
+.home-user-item:hover {
+  box-shadow: 0 3px 18px rgba(35,143,255,0.08);
+}
+
+.home-user-name {
+  font-weight: 600;
+  color: #164fa5;
+}
+
+.home-user-username {
+  color: #62748b;
+  font-size: 0.95rem;
+  margin-left: 7px;
+}
+
+.home-chat-btn {
+  background: linear-gradient(90deg, #238fff, #00cfff);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  padding: 7px 18px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.home-chat-btn:hover {
+  background: linear-gradient(90deg, #1e82de, #00a8c6);
+}

@@ -18,12 +18,11 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
       });
       if (!res.ok) throw new Error("로그인 실패");
       const { token, user, room_id } = await res.json();
-      console.log("user after signup/login", user);
       localStorage.setItem("token", token);
       localStorage.setItem("room_id", `${room_id}`);
       localStorage.setItem("username", user.username);
       localStorage.setItem("role", user.role);
-      localStorage.setItem("user_id", user.id); 
+      localStorage.setItem("user_id", user.id);
       onLogin();
     } catch {
       setError("로그인에 실패했습니다.");
@@ -31,12 +30,30 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>로그인</h2>
-      <input name="username" placeholder="아이디" required value={form.username} onChange={handleChange} />
-      <input name="password" type="password" placeholder="비밀번호" required value={form.password} onChange={handleChange} />
-      <button type="submit">로그인</button>
-      {error && <div style={{color:"red"}}>{error}</div>}
-    </form>
+    <div className="login-wrap">
+      <form className="login-card" onSubmit={handleSubmit}>
+        <h2 className="login-title">로그인</h2>
+        <input
+          name="username"
+          type="text"
+          placeholder="아이디"
+          className="login-input"
+          value={form.username}
+          onChange={handleChange}
+          required
+        />
+        <input
+          name="password"
+          type="password"
+          placeholder="비밀번호"
+          className="login-input"
+          value={form.password}
+          onChange={handleChange}
+          required
+        />
+        <button className="login-btn" type="submit">로그인</button>
+        {error && <div className="login-error">{error}</div>}
+      </form>
+    </div>
   );
 }
